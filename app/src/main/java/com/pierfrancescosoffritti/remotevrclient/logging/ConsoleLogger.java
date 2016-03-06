@@ -1,8 +1,7 @@
-package com.pierfrancescosoffritti.remotevrclient.utils;
+package com.pierfrancescosoffritti.remotevrclient.logging;
 
 import android.util.Log;
 
-import com.pierfrancescosoffritti.remotevrclient.ILogger;
 import com.squareup.otto.Subscribe;
 
 /**

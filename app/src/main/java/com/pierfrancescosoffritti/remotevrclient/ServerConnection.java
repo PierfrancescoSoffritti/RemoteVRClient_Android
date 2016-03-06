@@ -3,7 +3,7 @@ package com.pierfrancescosoffritti.remotevrclient;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.pierfrancescosoffritti.remotevrclient.utils.LoggerBus;
+import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 
 import java.io.DataInputStream;

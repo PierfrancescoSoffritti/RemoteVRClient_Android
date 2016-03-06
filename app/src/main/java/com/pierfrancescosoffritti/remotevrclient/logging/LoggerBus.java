@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient.utils;
+package com.pierfrancescosoffritti.remotevrclient.logging;
 
 import android.os.Handler;
 import android.os.Looper;

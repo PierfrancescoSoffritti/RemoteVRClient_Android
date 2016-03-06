@@ -1,5 +1,7 @@
 package com.pierfrancescosoffritti.remotevrclient.utils;
 
+import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;

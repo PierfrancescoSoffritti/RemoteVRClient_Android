@@ -2,7 +2,8 @@ package com.pierfrancescosoffritti.remotevrclient;
 
 import android.widget.TextView;
 
-import com.pierfrancescosoffritti.remotevrclient.utils.LoggerBus;
+import com.pierfrancescosoffritti.remotevrclient.logging.ILogger;
+import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 import com.squareup.otto.Subscribe;
 

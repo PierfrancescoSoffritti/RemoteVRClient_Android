@@ -1,20 +1,21 @@
-package com.pierfrancescosoffritti.remotevrclient;
+package com.pierfrancescosoffritti.remotevrclient.fragments;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.pierfrancescosoffritti.remotevrclient.utils.LoggerBus;
+import com.pierfrancescosoffritti.remotevrclient.R;
+import com.pierfrancescosoffritti.remotevrclient.logging.ILogger;
+import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 import com.squareup.otto.Subscribe;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
 
-public class LogFragment extends Fragment implements ILogger {
+public class LogFragment extends BaseFragment implements ILogger {
 
     @Bind(R.id.log_view) TextView logView;
 
@@ -27,33 +28,19 @@ public class LogFragment extends Fragment implements ILogger {
     }
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-    }
-
-    @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_log, container, false);
         ButterKnife.bind(this, view);
-
         return view;
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        ButterKnife.unbind(this);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
+    public void register() {
         LoggerBus.getInstance().register(this);
     }
 
     @Override
-    public void onStop() {
-        super.onStop();
+    public void unregister() {
         LoggerBus.getInstance().unregister(this);
     }
 

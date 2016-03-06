@@ -1,15 +1,18 @@
-package com.pierfrancescosoffritti.remotevrclient;
+package com.pierfrancescosoffritti.remotevrclient.fragments;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.pierfrancescosoffritti.remotevrclient.utils.ConsoleLogger;
+import com.pierfrancescosoffritti.remotevrclient.EventBus;
+import com.pierfrancescosoffritti.remotevrclient.Events;
+import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
+import com.pierfrancescosoffritti.remotevrclient.R;
+import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
+import com.pierfrancescosoffritti.remotevrclient.ServerConnection;
 import com.squareup.otto.Subscribe;
 
 import butterknife.Bind;
@@ -18,29 +21,27 @@ import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
-public class RemoteVRFragment extends Fragment {
+public class GameFragment extends BaseFragment {
 
-    private RemoteVRView remoteVRView;
 
     private ServerConnection serverConnection;
     private Subscription subscription;
 
-    private FPSCounter fpsCounter;
-    private ConsoleLogger consoleLogger;
-
+    @Bind(R.id.remotevr_view) RemoteVRView remoteVRView;
     @Bind(R.id.connected_view) View connectedView;
     @Bind(R.id.not_connected_view) View notConnectedView;
+
+    private FPSCounter fpsCounter;
 
     private View connectButton;
     private View disconnectButton;
 
-    public RemoteVRFragment() {
+    public GameFragment() {
         serverConnection = new ServerConnection();
     }
 
-    public static RemoteVRFragment newInstance() {
-        RemoteVRFragment fragment = new RemoteVRFragment();
-        return fragment;
+    public static GameFragment newInstance() {
+        return new GameFragment();
     }
 
     @Override
@@ -48,24 +49,23 @@ public class RemoteVRFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_remote_vr, container, false);
         ButterKnife.bind(this, view);
 
-        remoteVRView = ButterKnife.findById(view, R.id.remotevr_view);
-
         fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
-        consoleLogger = new ConsoleLogger();
-
         setupToolbar();
 
         return view;
     }
 
     private void setupToolbar() {
-        AppCompatActivity activity = (AppCompatActivity) getActivity();
-        Toolbar toolbar = (Toolbar) activity.findViewById(R.id.toolbar);
+        Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
 
-        if(toolbar.getChildCount() > 2)
-            for(int i=2; i<toolbar.getChildCount(); i++)
+        if(toolbar.getChildCount() > 1)
+            for(int i=1; i<toolbar.getChildCount(); i++)
                 toolbar.removeView(toolbar.getChildAt(i));
 
+        setupButtons(toolbar);
+    }
+
+    private void setupButtons(Toolbar toolbar) {
         View connectionControls = LayoutInflater.from(getContext()).inflate(R.layout.connection_controls, toolbar, false);
         Toolbar.LayoutParams params = new Toolbar.LayoutParams(Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.RIGHT;
@@ -76,6 +76,7 @@ public class RemoteVRFragment extends Fragment {
 
         connectButton.setOnClickListener((view) -> startClient());
         disconnectButton.setOnClickListener((view) -> { if(subscription != null && !subscription.isUnsubscribed()) subscription.unsubscribe(); });
+        connectionControls.findViewById(R.id.settings).setOnClickListener((view) -> { });
     }
 
     private void startClient() {
@@ -88,24 +89,14 @@ public class RemoteVRFragment extends Fragment {
     }
 
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        ButterKnife.unbind(this);
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
+    public void register() {
         fpsCounter.register();
-        consoleLogger.register();
         EventBus.getInstance().register(this);
     }
 
     @Override
-    public void onPause() {
-        super.onPause();
+    public void unregister() {
         fpsCounter.unregister();
-        consoleLogger.unregister();
         EventBus.getInstance().unregister(this);
     }
 
@@ -115,18 +106,18 @@ public class RemoteVRFragment extends Fragment {
         subscription.unsubscribe();
     }
 
+    @SuppressWarnings("unused")
     @Subscribe
     public void onServerConnected(Events.ServerConnected e) {
-        System.out.println("server connected");
         connectedView.setVisibility(View.VISIBLE);
         notConnectedView.setVisibility(View.GONE);
         connectButton.setVisibility(View.GONE);
         disconnectButton.setVisibility(View.VISIBLE);
     }
 
+    @SuppressWarnings("unused")
     @Subscribe
     public void onServerDisconnected(Events.ServerDisconnected e) {
-        System.out.println("server disconnected");
         connectedView.setVisibility(View.GONE);
         notConnectedView.setVisibility(View.VISIBLE);
         connectButton.setVisibility(View.VISIBLE);
