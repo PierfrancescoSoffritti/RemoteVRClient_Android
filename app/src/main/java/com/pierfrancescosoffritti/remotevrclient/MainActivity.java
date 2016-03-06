@@ -1,24 +1,23 @@
 package com.pierfrancescosoffritti.remotevrclient;
 
 import android.os.Bundle;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Pair;
 
-import com.pierfrancescosoffritti.remotevrclient.utils.ConsoleLogger;
+import com.pierfrancescosoffritti.remotevrclient.adapters.ViewPagerAdapter;
+import com.pierfrancescosoffritti.remotevrclient.utils.Fragments;
 
 import butterknife.ButterKnife;
-import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RemoteVRView remoteVRView;
+    private static final String TAG_0 = "TAG_0";
+    private static final String TAG_1 = "TAG_1";
 
-    private ServerConnection serverConnection;
-    private Subscription subscription;
-
-    private FPSCounter fpsCounter;
-    private ConsoleLogger consoleLogger;
+    private ViewPagerAdapter mPagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,41 +25,41 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        serverConnection = new ServerConnection();
-        remoteVRView = ButterKnife.findById(this, R.id.remotevr_view);
+        setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
 
-        fpsCounter = new FPSCounter(ButterKnife.findById(this, R.id.fps_counter));
-        consoleLogger = new ConsoleLogger();
+        RemoteVRFragment remoteVRFragment;
+        LogFragment logFragment;
+        if(savedInstanceState == null) {
+            remoteVRFragment = (RemoteVRFragment) Fragments.findFragment(getSupportFragmentManager(), RemoteVRFragment.newInstance());
+            logFragment = (LogFragment) Fragments.findFragment(getSupportFragmentManager(), LogFragment.newInstance());
+        } else {
+            String tag0 = savedInstanceState.getString(TAG_0);
+            String tag1 = savedInstanceState.getString(TAG_1);
 
-        startClient();
+            remoteVRFragment = (RemoteVRFragment) getSupportFragmentManager().findFragmentByTag(tag0);
+            logFragment = (LogFragment) getSupportFragmentManager().findFragmentByTag(tag1);
+        }
+
+        setUpViewPager(
+                new Pair(remoteVRFragment, getString(R.string.game)),
+                new Pair(logFragment, getString(R.string.log))
+        );
+    }
+
+    private void setUpViewPager(Pair<Fragment, String>... fragments) {
+        mPagerAdapter = new ViewPagerAdapter(getSupportFragmentManager(), fragments);
+        ViewPager mViewPager = (ViewPager) findViewById(R.id.pager);
+        mViewPager.setAdapter(mPagerAdapter);
+
+        TabLayout tabs = ButterKnife.findById(this, R.id.tab_layout);
+        tabs.setupWithViewPager(mViewPager);
     }
 
     @Override
-    public void onResume() {
-        super.onResume();
-        fpsCounter.register();
-        consoleLogger.register();
-    }
+    public void onSaveInstanceState (Bundle outState) {
+        super.onSaveInstanceState(outState);
 
-    @Override
-    public void onPause() {
-        super.onPause();
-        fpsCounter.unregister();
-        consoleLogger.unregister();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        subscription.unsubscribe();
-    }
-
-    private void startClient() {
-        subscription = serverConnection
-                .getServerOutput("192.168.1.23", ServerConnection.DEFAULT_PORT)
-                .subscribeOn(Schedulers.newThread())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnUnsubscribe(() -> serverConnection.close())
-                .subscribe(bitmap -> remoteVRView.updateImage(bitmap));
+        outState.putString(TAG_0, mPagerAdapter.getItem(0).getTag());
+        outState.putString(TAG_1, mPagerAdapter.getItem(1).getTag());
     }
 }

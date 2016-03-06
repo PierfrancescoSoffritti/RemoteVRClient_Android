@@ -1,4 +1,10 @@
 <resources>
     <string name="app_name">CloudVRClient</string>
     <string name="sample_text">sample_text</string>
+    <string name="fps_counter">fps_counter</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="game">Game</string>
+    <string name="log">Log</string>
 </resources>

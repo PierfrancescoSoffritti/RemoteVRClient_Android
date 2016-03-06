@@ -79,7 +79,8 @@ public class ServerConnection {
 
                 outSock.writeInt(1);
 
-                LoggerBus.getInstance().post(new Events.ServerConnected());
+                EventBus.getInstance().post(new Events.ServerConnected());
+                LoggerBus.getInstance().post(new LoggerBus.Log("Started connection with server.", LOG_NAME));
 
                 mPerformanceMonitor.start();
                 int dim;
@@ -116,7 +117,7 @@ public class ServerConnection {
         try {
             socket.close();
             LoggerBus.getInstance().post(new LoggerBus.Log("Ended connection with server.", LOG_NAME));
-            LoggerBus.getInstance().post(new Events.ServerDisconnected());
+            EventBus.getInstance().post(new Events.ServerDisconnected());
         } catch (IOException e) {
             e.printStackTrace();
         }
