@@ -1,7 +1,5 @@
 package com.pierfrancescosoffritti.remotevrclient.utils;
 
-import com.pierfrancescosoffritti.remotevrclient.EventBus;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -29,7 +27,7 @@ public class PerformanceMonitor {
 
     public void stop() {
         timer.cancel();
-        EventBus.getInstance().post(new LoggerBus.Log("AVG: " +task.avg +" frame/second" , LOG_NAME, LoggerBus.Log.STATS_AVG));
+        LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +task.avg +" frame/second" , LOG_NAME, LoggerBus.Log.STATS_AVG));
     }
 
     public double getAvg() {
@@ -61,8 +59,8 @@ public class PerformanceMonitor {
             else
                 avg = sum;
 
-            EventBus.getInstance().post(new LoggerBus.Log(+counter +" frame/second", LOG_NAME, LoggerBus.Log.STATS_INST));
-            EventBus.getInstance().post(new LoggerBus.Log("AVG: " +avg +" frame/second" , LOG_NAME, LoggerBus.Log.STATS_AVG));
+            LoggerBus.getInstance().post(new LoggerBus.Log(+counter +" frame/second", LOG_NAME, LoggerBus.Log.STATS_INST));
+            LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +avg +" frame/second" , LOG_NAME, LoggerBus.Log.STATS_AVG));
             history.add(counter);
             counter = 0;
         }
