@@ -6,4 +6,7 @@
     <string name="log">Log</string>
     <string name="press">Press</string>
     <string name="to_connect">to connect</string>
+    <string name="server_ip">Server IP</string>
+    <string name="server_port">Server port</string>
+    <string name="title_activity_preferences">Settings</string>
 </resources>

@@ -1,6 +1,9 @@
 package com.pierfrancescosoffritti.remotevrclient.fragments;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -10,6 +13,7 @@ import android.view.ViewGroup;
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
+import com.pierfrancescosoffritti.remotevrclient.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
 import com.pierfrancescosoffritti.remotevrclient.ServerConnection;
@@ -76,12 +80,27 @@ public class GameFragment extends BaseFragment {
 
         connectButton.setOnClickListener((view) -> startClient());
         disconnectButton.setOnClickListener((view) -> { if(subscription != null && !subscription.isUnsubscribed()) subscription.unsubscribe(); });
-        connectionControls.findViewById(R.id.settings).setOnClickListener((view) -> { });
+        connectionControls.findViewById(R.id.settings).setOnClickListener((view) -> {
+            Intent intent = new Intent(getActivity(), PreferencesActivity.class);
+            getActivity().startActivity(intent);
+        });
     }
 
     private void startClient() {
+        // TODO cleanup
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
+        String serverIP = sharedPreferences.getString(getString(R.string.server_ip), "192.168.1.23");
+        String port = sharedPreferences.getString(getString(R.string.server_port), ServerConnection.DEFAULT_PORT + "");
+
+        if(serverIP.isEmpty())
+            serverIP="192.168.1.23";
+        if(port.isEmpty())
+            port = ServerConnection.DEFAULT_PORT+"";
+
+        int serverPort = Integer.parseInt(port);
+
         subscription = serverConnection
-                .getServerOutput("192.168.1.23", ServerConnection.DEFAULT_PORT)
+                .getServerOutput(serverIP, serverPort)
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnUnsubscribe(() -> serverConnection.close())
