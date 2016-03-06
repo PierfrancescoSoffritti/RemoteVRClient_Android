@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
-import com.pierfrancescosoffritti.remotevrclient.PreferencesActivity;
+import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
 import com.pierfrancescosoffritti.remotevrclient.ServerConnection;

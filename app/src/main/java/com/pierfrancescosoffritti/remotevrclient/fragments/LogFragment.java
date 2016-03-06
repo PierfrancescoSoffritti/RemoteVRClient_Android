@@ -1,6 +1,7 @@
 package com.pierfrancescosoffritti.remotevrclient.fragments;
 
 import android.os.Bundle;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -53,10 +54,10 @@ public class LogFragment extends BaseFragment implements ILogger {
             case LoggerBus.Log.STATS_INST:
                 break;
             case LoggerBus.Log.ERROR:
-                logView.append("\n" +log.getSender() +" : " +log.getMessage());
+                logView.append(Html.fromHtml("\n<br/><font color=\"red\">" +log.getSender() +" : " +log.getMessage() +"</font><br/>\n"));
                 break;
             case LoggerBus.Log.NORMAL:
-                logView.append("\n" +log.getSender() +" : " +log.getMessage());
+                logView.append("\n" +log.getSender() +" : " +log.getMessage() +"\n");
                 break;
         }
     }
