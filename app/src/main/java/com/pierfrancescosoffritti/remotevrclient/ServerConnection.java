@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
+import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Quaternion;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 
 import java.io.DataInputStream;
@@ -30,7 +31,7 @@ public class ServerConnection {
 
     private Socket connect(String ip, int port) {
         try {
-            Socket socket = new Socket(InetAddress.getByName(ip), port);
+            socket = new Socket(InetAddress.getByName(ip), port);
             socket.setSoTimeout(30000);
             return socket;
         } catch (UnknownHostException e) {
@@ -73,7 +74,7 @@ public class ServerConnection {
         PerformanceMonitor mPerformanceMonitor = new PerformanceMonitor();
         Observable.OnSubscribe<Bitmap> onSubscribe = subscriber -> {
             try {
-                socket = connect(ip, port);
+                connect(ip, port);
                 DataInputStream inSock = getInputStream(socket);
                 DataOutputStream outSock = getOutputStream(socket);
 
@@ -121,5 +122,13 @@ public class ServerConnection {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public Socket getSocket() {
+        return socket;
+    }
+
+    public void getServerInput(Quaternion quaternion) {
+
     }
 }

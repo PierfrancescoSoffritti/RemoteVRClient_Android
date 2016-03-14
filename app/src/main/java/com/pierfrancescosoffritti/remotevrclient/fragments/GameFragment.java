@@ -13,11 +13,14 @@ import android.view.ViewGroup;
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
-import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
 import com.pierfrancescosoffritti.remotevrclient.ServerConnection;
+import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
+import com.pierfrancescosoffritti.remotevrclient.sensorFusion.RotationProvider;
 import com.squareup.otto.Subscribe;
+
+import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -29,7 +32,10 @@ public class GameFragment extends BaseFragment {
 
 
     private ServerConnection serverConnection;
-    private Subscription subscription;
+    private Subscription serverOutputSubscription;
+
+    private RotationProvider rotationProvider;
+    private Subscription serverInputSubscription;
 
     @Bind(R.id.remotevr_view) RemoteVRView remoteVRView;
     @Bind(R.id.connected_view) View connectedView;
@@ -41,7 +47,6 @@ public class GameFragment extends BaseFragment {
     private View disconnectButton;
 
     public GameFragment() {
-        serverConnection = new ServerConnection();
     }
 
     public static GameFragment newInstance() {
@@ -55,6 +60,9 @@ public class GameFragment extends BaseFragment {
 
         fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
         setupToolbar();
+
+        serverConnection = new ServerConnection();
+        rotationProvider = new RotationProvider(getContext());
 
         return view;
     }
@@ -79,7 +87,10 @@ public class GameFragment extends BaseFragment {
         disconnectButton = connectionControls.findViewById(R.id.disconnect);
 
         connectButton.setOnClickListener((view) -> startClient());
-        disconnectButton.setOnClickListener((view) -> { if(subscription != null && !subscription.isUnsubscribed()) subscription.unsubscribe(); });
+        disconnectButton.setOnClickListener((view) -> {
+            if(serverOutputSubscription != null && !serverOutputSubscription.isUnsubscribed()) serverOutputSubscription.unsubscribe();
+            if(serverInputSubscription != null && !serverInputSubscription.isUnsubscribed()) serverInputSubscription.unsubscribe();
+        });
         connectionControls.findViewById(R.id.settings).setOnClickListener((view) -> {
             Intent intent = new Intent(getActivity(), PreferencesActivity.class);
             getActivity().startActivity(intent);
@@ -87,42 +98,46 @@ public class GameFragment extends BaseFragment {
     }
 
     private void startClient() {
-        // TODO cleanup
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
         String serverIP = sharedPreferences.getString(getString(R.string.server_ip), "192.168.1.23");
         String port = sharedPreferences.getString(getString(R.string.server_port), ServerConnection.DEFAULT_PORT + "");
-
-        if(serverIP.isEmpty())
-            serverIP="192.168.1.23";
-        if(port.isEmpty())
-            port = ServerConnection.DEFAULT_PORT+"";
-
         int serverPort = Integer.parseInt(port);
 
-        subscription = serverConnection
+        serverOutputSubscription = serverConnection
                 .getServerOutput(serverIP, serverPort)
-                .subscribeOn(Schedulers.newThread())
+                .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .doOnUnsubscribe(() -> serverConnection.close())
                 .subscribe(bitmap -> remoteVRView.updateImage(bitmap));
+
+        serverInputSubscription = rotationProvider
+                .getRotationEmitter()
+                .sample(16, TimeUnit.MILLISECONDS)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.io())
+                .doOnUnsubscribe(() -> serverConnection.close())
+                .subscribe(quaternion -> serverConnection.getServerInput(quaternion));
     }
 
     @Override
     public void register() {
         fpsCounter.register();
         EventBus.getInstance().register(this);
+        rotationProvider.start();
     }
 
     @Override
     public void unregister() {
         fpsCounter.unregister();
         EventBus.getInstance().unregister(this);
+        rotationProvider.stop();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        subscription.unsubscribe();
+        serverOutputSubscription.unsubscribe();
+        serverInputSubscription.unsubscribe();
     }
 
     @SuppressWarnings("unused")
