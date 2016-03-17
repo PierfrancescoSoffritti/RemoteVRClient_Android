@@ -13,7 +13,7 @@ import java.util.TimerTask;
 
 public class PerformanceMonitor {
 
-    public static final String LOG_NAME = PerformanceMonitor.class.getSimpleName();
+    public static final String LOG_TAG = PerformanceMonitor.class.getSimpleName();
 
     private Timer timer;
     private PerformanceMonitorTask task;
@@ -29,7 +29,7 @@ public class PerformanceMonitor {
 
     public void stop() {
         timer.cancel();
-        LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +task.avg +" frame/second" , LOG_NAME, LoggerBus.Log.STATS_AVG));
+        LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +task.avg +" frame/second" , LOG_TAG, LoggerBus.Log.STATS_AVG));
     }
 
     public double getAvg() {
@@ -61,8 +61,8 @@ public class PerformanceMonitor {
             else
                 avg = sum;
 
-            LoggerBus.getInstance().post(new LoggerBus.Log(+counter +" frame/second", LOG_NAME, LoggerBus.Log.STATS_INST));
-            LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +avg +" frame/second" , LOG_NAME, LoggerBus.Log.STATS_AVG));
+            LoggerBus.getInstance().post(new LoggerBus.Log(+counter +" frame/second", LOG_TAG, LoggerBus.Log.STATS_INST));
+            LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +avg +" frame/second" , LOG_TAG, LoggerBus.Log.STATS_AVG));
             history.add(counter);
             counter = 0;
         }

@@ -21,7 +21,7 @@ public class FPSCounter implements ILogger {
     @Subscribe
     @Override
     public void onLog(LoggerBus.Log log) {
-        if(log.getSender().equals(PerformanceMonitor.LOG_NAME)) {
+        if(log.getSender().equals(PerformanceMonitor.LOG_TAG)) {
             if (log.getType() == LoggerBus.Log.STATS_INST)
                 mView.setText(log.getMessage());
         }

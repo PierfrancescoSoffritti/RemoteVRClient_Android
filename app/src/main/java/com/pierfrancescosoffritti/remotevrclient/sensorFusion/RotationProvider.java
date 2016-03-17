@@ -7,33 +7,26 @@ import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvide
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvider.OrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Quaternion;
 
-import rx.Observable;
-
 /**
  * Created by  Pierfrancesco on 14/03/2016.
  */
 public class RotationProvider {
 
-    OrientationProvider orientationProvider;
+    OrientationProvider rotationProvider;
 
     public RotationProvider(Context context) {
-        orientationProvider = new ImprovedOrientationSensor2Provider((SensorManager) context.getSystemService(context.SENSOR_SERVICE));
+        rotationProvider = new ImprovedOrientationSensor2Provider((SensorManager) context.getSystemService(context.SENSOR_SERVICE));
     }
 
     public void start() {
-        orientationProvider.start();
+        rotationProvider.start();
     }
 
     public void stop() {
-        orientationProvider.stop();
+        rotationProvider.stop();
     }
 
-    public Observable<Quaternion> getRotationEmitter() {
-        Observable.OnSubscribe<Quaternion> onSubscribe = subscriber -> {
-            while(true)
-                subscriber.onNext(orientationProvider.getQuaternion());
-        };
-
-        return Observable.create(onSubscribe);
+    public Quaternion getQuaternion() {
+        return rotationProvider.getQuaternion();
     }
 }

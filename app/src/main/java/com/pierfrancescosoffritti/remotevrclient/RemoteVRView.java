@@ -40,6 +40,7 @@ public class RemoteVRView extends View {
     }
 
     private double drawBitmap( Canvas canvas ) {
+        // TODO images will have 2 known sizes, for landscape and portrait, so this will be moved out from here
         double viewWidth = canvas.getWidth();
         double viewHeight = canvas.getHeight();
         double imageWidth = mBitmap.getWidth();

@@ -18,18 +18,19 @@ import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
 import com.pierfrancescosoffritti.remotevrclient.ServerConnection;
 import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.RotationProvider;
+import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 import com.squareup.otto.Subscribe;
 
 import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class GameFragment extends BaseFragment {
-
 
     private ServerConnection serverConnection;
     private Subscription serverOutputSubscription;
@@ -58,8 +59,9 @@ public class GameFragment extends BaseFragment {
         View view = inflater.inflate(R.layout.fragment_remote_vr, container, false);
         ButterKnife.bind(this, view);
 
-        fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
         setupToolbar();
+
+        fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
 
         serverConnection = new ServerConnection();
         rotationProvider = new RotationProvider(getContext());
@@ -74,10 +76,10 @@ public class GameFragment extends BaseFragment {
             for(int i=1; i<toolbar.getChildCount(); i++)
                 toolbar.removeView(toolbar.getChildAt(i));
 
-        setupButtons(toolbar);
+        setupToolbarButtons(toolbar);
     }
 
-    private void setupButtons(Toolbar toolbar) {
+    private void setupToolbarButtons(Toolbar toolbar) {
         View connectionControls = LayoutInflater.from(getContext()).inflate(R.layout.connection_controls, toolbar, false);
         Toolbar.LayoutParams params = new Toolbar.LayoutParams(Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.RIGHT;
@@ -86,11 +88,13 @@ public class GameFragment extends BaseFragment {
         connectButton = connectionControls.findViewById(R.id.connect);
         disconnectButton = connectionControls.findViewById(R.id.disconnect);
 
+        // listeners
         connectButton.setOnClickListener((view) -> startClient());
         disconnectButton.setOnClickListener((view) -> {
             if(serverOutputSubscription != null && !serverOutputSubscription.isUnsubscribed()) serverOutputSubscription.unsubscribe();
             if(serverInputSubscription != null && !serverInputSubscription.isUnsubscribed()) serverInputSubscription.unsubscribe();
         });
+
         connectionControls.findViewById(R.id.settings).setOnClickListener((view) -> {
             Intent intent = new Intent(getActivity(), PreferencesActivity.class);
             getActivity().startActivity(intent);
@@ -103,20 +107,34 @@ public class GameFragment extends BaseFragment {
         String port = sharedPreferences.getString(getString(R.string.server_port), ServerConnection.DEFAULT_PORT + "");
         int serverPort = Integer.parseInt(port);
 
-        serverOutputSubscription = serverConnection
-                .getServerOutput(serverIP, serverPort)
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnUnsubscribe(() -> serverConnection.close())
-                .subscribe(bitmap -> remoteVRView.updateImage(bitmap));
+        PerformanceMonitor mPerformanceMonitor = new PerformanceMonitor();
 
-        serverInputSubscription = rotationProvider
-                .getRotationEmitter()
-                .sample(16, TimeUnit.MILLISECONDS)
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.io())
-                .doOnUnsubscribe(() -> serverConnection.close())
-                .subscribe(quaternion -> serverConnection.getServerInput(quaternion));
+        new Thread() {
+            public void run() {
+                serverConnection.connect(serverIP, serverPort);
+
+                serverOutputSubscription = serverConnection
+                        .getServerOutput()
+
+                        // performance monitor
+                        .doOnSubscribe(mPerformanceMonitor::start)
+                        .doOnNext(bitmap -> mPerformanceMonitor.incCounter())
+                        .doOnUnsubscribe(mPerformanceMonitor::stop)
+
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .doOnUnsubscribe(serverConnection::close)
+                        .subscribe(bitmap -> remoteVRView.updateImage(bitmap));
+
+                serverInputSubscription = Observable.interval(16, TimeUnit.MILLISECONDS, Schedulers.io())
+                        .map(tick -> rotationProvider.getQuaternion())
+                        .doOnUnsubscribe(rotationProvider::stop)
+                        .subscribeOn(Schedulers.io())
+                        .subscribe(serverConnection.getServerInput());
+
+                serverConnection.setInputSubscription(serverInputSubscription);
+            }
+        }.start();
     }
 
     @Override
