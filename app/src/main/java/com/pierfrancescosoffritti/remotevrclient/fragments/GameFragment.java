@@ -15,8 +15,9 @@ import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
-import com.pierfrancescosoffritti.remotevrclient.ServerConnection;
 import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
+import com.pierfrancescosoffritti.remotevrclient.connections.ServerConnection;
+import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.RotationProvider;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 import com.squareup.otto.Subscribe;
@@ -26,17 +27,16 @@ import java.util.concurrent.TimeUnit;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import rx.Observable;
-import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class GameFragment extends BaseFragment {
 
+    protected final String LOG_TAG = getClass().getSimpleName();
+
     private ServerConnection serverConnection;
-    private Subscription serverOutputSubscription;
 
     private RotationProvider rotationProvider;
-    private Subscription serverInputSubscription;
 
     @Bind(R.id.remotevr_view) RemoteVRView remoteVRView;
     @Bind(R.id.connected_view) View connectedView;
@@ -63,7 +63,6 @@ public class GameFragment extends BaseFragment {
 
         fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
 
-        serverConnection = new ServerConnection();
         rotationProvider = new RotationProvider(getContext());
 
         return view;
@@ -90,10 +89,7 @@ public class GameFragment extends BaseFragment {
 
         // listeners
         connectButton.setOnClickListener((view) -> startClient());
-        disconnectButton.setOnClickListener((view) -> {
-            if(serverOutputSubscription != null && !serverOutputSubscription.isUnsubscribed()) serverOutputSubscription.unsubscribe();
-            if(serverInputSubscription != null && !serverInputSubscription.isUnsubscribed()) serverInputSubscription.unsubscribe();
-        });
+        disconnectButton.setOnClickListener((view) -> { if(serverConnection != null) serverConnection.disconnect(); });
 
         connectionControls.findViewById(R.id.settings).setOnClickListener((view) -> {
             Intent intent = new Intent(getActivity(), PreferencesActivity.class);
@@ -111,9 +107,10 @@ public class GameFragment extends BaseFragment {
 
         new Thread() {
             public void run() {
-                serverConnection.connect(serverIP, serverPort);
+                serverConnection = new ServerConnection(serverIP, serverPort);
 
-                serverOutputSubscription = serverConnection
+                // game video
+                serverConnection
                         .getServerOutput()
 
                         // performance monitor
@@ -122,17 +119,20 @@ public class GameFragment extends BaseFragment {
                         .doOnUnsubscribe(mPerformanceMonitor::stop)
 
                         .subscribeOn(Schedulers.io())
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .doOnUnsubscribe(serverConnection::close)
-                        .subscribe(bitmap -> remoteVRView.updateImage(bitmap));
+                        .doOnSubscribe(() -> EventBus.getInstance().post(new Events.ServerConnected()))
+                        .doOnSubscribe(() -> LoggerBus.getInstance().post(new LoggerBus.Log("Started connection with server.", LOG_TAG)))
 
-                serverInputSubscription = Observable.interval(16, TimeUnit.MILLISECONDS, Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe(bitmap -> remoteVRView.updateImage(bitmap), Throwable::printStackTrace);
+
+                // game input
+                Observable.interval(50, TimeUnit.MILLISECONDS, Schedulers.io())
                         .map(tick -> rotationProvider.getQuaternion())
+                        .doOnSubscribe(rotationProvider::start)
                         .doOnUnsubscribe(rotationProvider::stop)
                         .subscribeOn(Schedulers.io())
-                        .subscribe(serverConnection.getServerInput());
-
-                serverConnection.setInputSubscription(serverInputSubscription);
+                        .doOnNext((quaternion) -> LoggerBus.getInstance().post(new LoggerBus.Log("Quaternion sent", LOG_TAG)))
+                        .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
             }
         }.start();
     }
@@ -141,21 +141,18 @@ public class GameFragment extends BaseFragment {
     public void register() {
         fpsCounter.register();
         EventBus.getInstance().register(this);
-        rotationProvider.start();
     }
 
     @Override
     public void unregister() {
         fpsCounter.unregister();
         EventBus.getInstance().unregister(this);
-        rotationProvider.stop();
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        serverOutputSubscription.unsubscribe();
-        serverInputSubscription.unsubscribe();
+        serverConnection.disconnect();
     }
 
     @SuppressWarnings("unused")
