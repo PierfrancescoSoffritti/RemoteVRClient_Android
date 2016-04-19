@@ -9,24 +9,26 @@ import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Qua
 
 /**
  * Created by  Pierfrancesco on 14/03/2016.
+ *
+ * Wrapper of the OrientationProvider class
  */
-public class RotationProvider {
+public class MyOrientationProvider {
 
-    OrientationProvider rotationProvider;
+    OrientationProvider orientationProvider;
 
-    public RotationProvider(Context context) {
-        rotationProvider = new ImprovedOrientationSensor2Provider((SensorManager) context.getSystemService(context.SENSOR_SERVICE));
+    public MyOrientationProvider(Context context) {
+        orientationProvider = new ImprovedOrientationSensor2Provider((SensorManager) context.getSystemService(Context.SENSOR_SERVICE));
     }
 
     public void start() {
-        rotationProvider.start();
+        orientationProvider.start();
     }
 
     public void stop() {
-        rotationProvider.stop();
+        orientationProvider.stop();
     }
 
     public Quaternion getQuaternion() {
-        return rotationProvider.getQuaternion();
+        return orientationProvider.getQuaternion();
     }
 }

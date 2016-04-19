@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -15,10 +16,11 @@ import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
+import com.pierfrancescosoffritti.remotevrclient.RemoteViewClickListener;
 import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.connections.ServerConnection;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
-import com.pierfrancescosoffritti.remotevrclient.sensorFusion.RotationProvider;
+import com.pierfrancescosoffritti.remotevrclient.sensorFusion.MyOrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 import com.squareup.otto.Subscribe;
 
@@ -36,7 +38,7 @@ public class GameFragment extends BaseFragment {
 
     private ServerConnection serverConnection;
 
-    private RotationProvider rotationProvider;
+    private MyOrientationProvider orientationProvider;
 
     @Bind(R.id.remotevr_view) RemoteVRView remoteVRView;
     @Bind(R.id.connected_view) View connectedView;
@@ -44,6 +46,7 @@ public class GameFragment extends BaseFragment {
 
     private FPSCounter fpsCounter;
 
+    // toolbar buttons, inflated manually.
     private View connectButton;
     private View disconnectButton;
 
@@ -63,7 +66,10 @@ public class GameFragment extends BaseFragment {
 
         fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
 
-        rotationProvider = new RotationProvider(getContext());
+        orientationProvider = new MyOrientationProvider(getContext());
+
+        // when clicked goes full screen. TODO do better
+        remoteVRView.setOnClickListener(new RemoteViewClickListener(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout)));
 
         return view;
     }
@@ -71,6 +77,7 @@ public class GameFragment extends BaseFragment {
     private void setupToolbar() {
         Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
 
+        // clear the toolbar
         if(toolbar.getChildCount() > 1)
             for(int i=1; i<toolbar.getChildCount(); i++)
                 toolbar.removeView(toolbar.getChildAt(i));
@@ -97,11 +104,14 @@ public class GameFragment extends BaseFragment {
         });
     }
 
+    /**
+     * starts the connection with the server
+     * the IP and PORT of the server are saved in the app's DefaultSharedPreferences because can be changed in SETTINGS
+     */
     private void startClient() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
         String serverIP = sharedPreferences.getString(getString(R.string.server_ip), "192.168.1.23");
-        String port = sharedPreferences.getString(getString(R.string.server_port), ServerConnection.DEFAULT_PORT + "");
-        int serverPort = Integer.parseInt(port);
+        int serverPort = Integer.parseInt(sharedPreferences.getString(getString(R.string.server_port), ServerConnection.DEFAULT_PORT + ""));
 
         PerformanceMonitor mPerformanceMonitor = new PerformanceMonitor();
 
@@ -127,11 +137,11 @@ public class GameFragment extends BaseFragment {
 
                 // game input
                 Observable.interval(50, TimeUnit.MILLISECONDS, Schedulers.io())
-                        .map(tick -> rotationProvider.getQuaternion())
-                        .doOnSubscribe(rotationProvider::start)
-                        .doOnUnsubscribe(rotationProvider::stop)
+                        .map(tick -> orientationProvider.getQuaternion())
                         .subscribeOn(Schedulers.io())
-                        .doOnNext((quaternion) -> LoggerBus.getInstance().post(new LoggerBus.Log("Quaternion sent", LOG_TAG)))
+                        .doOnSubscribe(orientationProvider::start)
+                        .doOnUnsubscribe(orientationProvider::stop)
+                        //.doOnNext((quaternion) -> LoggerBus.getInstance().post(new LoggerBus.Log("Quaternion sent", LOG_TAG)))
                         .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
             }
         }.start();
