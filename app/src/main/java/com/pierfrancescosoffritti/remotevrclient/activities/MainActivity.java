@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity {
 
 //        ConsoleLogger logger = new ConsoleLogger();
 //        MyOrientationProvider orientationProvider = new MyOrientationProvider(this);
-//        Observable.interval(1, TimeUnit.MILLISECONDS, Schedulers.io())
+//        Observable.interval(50, TimeUnit.MILLISECONDS, Schedulers.io())
 //                .map(tick -> orientationProvider.getQuaternion())
 //                .subscribeOn(Schedulers.io())
 //                .doOnSubscribe(orientationProvider::start)

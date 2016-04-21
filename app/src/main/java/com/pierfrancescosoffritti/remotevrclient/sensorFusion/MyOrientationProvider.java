@@ -3,6 +3,7 @@ package com.pierfrancescosoffritti.remotevrclient.sensorFusion;
 import android.content.Context;
 import android.hardware.SensorManager;
 
+import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvider.ImprovedOrientationSensor1Provider;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvider.ImprovedOrientationSensor2Provider;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvider.OrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Quaternion;
@@ -17,7 +18,7 @@ public class MyOrientationProvider {
     OrientationProvider orientationProvider;
 
     public MyOrientationProvider(Context context) {
-        orientationProvider = new ImprovedOrientationSensor2Provider((SensorManager) context.getSystemService(Context.SENSOR_SERVICE));
+        orientationProvider = new ImprovedOrientationSensor1Provider((SensorManager) context.getSystemService(Context.SENSOR_SERVICE));
     }
 
     public void start() {

@@ -69,7 +69,7 @@ public class GameFragment extends BaseFragment {
         orientationProvider = new MyOrientationProvider(getContext());
 
         // when clicked goes full screen. TODO do better
-        remoteVRView.setOnClickListener(new RemoteViewClickListener(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout)));
+        remoteVRView.setOnLongClickListener(new RemoteViewClickListener(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout)));
 
         return view;
     }
