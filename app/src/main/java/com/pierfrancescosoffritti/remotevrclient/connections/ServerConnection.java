@@ -8,6 +8,9 @@ import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Quaternion;
 
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+
 import rx.Observable;
 import rx.functions.Action1;
 
@@ -63,15 +66,19 @@ public class ServerConnection extends AbstractServerConnection {
 
     /**
      * The server input is a stream of quaternions, representing the phone rotations
-     * @return an Action1 containing the onNext() logic. Takes a Quaternion and sends it to the server.
+     * @return an Action1 containing the onNext() logic. Takes a Quaternion and sends it to the server as a byte array.
      */
     public Action1<Quaternion> getServerInput() {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(4*4);
         return quaternion -> {
             try {
-                outSocket.writeFloat(quaternion.getX());
-                outSocket.writeFloat(quaternion.getY());
-                outSocket.writeFloat(quaternion.getZ());
-                outSocket.writeFloat(quaternion.getW());
+                byteBuffer.clear();
+                byteBuffer
+                        .putFloat(quaternion.getX())
+                        .putFloat(quaternion.getY())
+                        .putFloat(quaternion.getZ())
+                        .putFloat(quaternion.getW());
+                outSocket.write(byteBuffer.array());
             } catch (Exception e) {
                 throw new RuntimeException("Can't send quaternion", e);
             }
