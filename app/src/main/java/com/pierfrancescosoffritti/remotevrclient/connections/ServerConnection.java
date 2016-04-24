@@ -38,11 +38,6 @@ public class ServerConnection extends AbstractServerConnection {
     public Observable<Bitmap> getServerOutput() {
         Observable.OnSubscribe<Bitmap> onSubscribe = subscriber -> {
             try {
-
-                // the simple protocol with the server requires every client to identify himself.
-                // a normal client (such as this) has to send a 1, while the client on which the game is running has to send a 0.
-                outSocket.writeInt(1);
-
                 // receive images
                 int dim;
                 while ((dim = inSocket.readInt()) > 0) {
