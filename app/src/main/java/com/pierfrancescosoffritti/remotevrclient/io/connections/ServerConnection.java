@@ -1,15 +1,12 @@
-package com.pierfrancescosoffritti.remotevrclient.connections;
+package com.pierfrancescosoffritti.remotevrclient.io.connections;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
+import com.pierfrancescosoffritti.remotevrclient.io.data.GameInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
-import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Quaternion;
-
-import java.nio.ByteBuffer;
-import java.nio.FloatBuffer;
 
 import rx.Observable;
 import rx.functions.Action1;
@@ -60,22 +57,16 @@ public class ServerConnection extends AbstractServerConnection {
     }
 
     /**
-     * The server input is a stream of quaternions, representing the phone rotations
-     * @return an Action1 containing the onNext() logic. Takes a Quaternion and sends it to the server as a byte array.
+     * The server input is a stream of bytes, representing rotation (quaternions) or touch interactions
+     * @return an Action1 containing the onNext() logic. Takes a {@link GameInput} and sends its type and payload to the server.
      */
-    public Action1<Quaternion> getServerInput() {
-        ByteBuffer byteBuffer = ByteBuffer.allocate(4*4);
-        return quaternion -> {
+    public Action1<GameInput> getServerInput() {
+        return gameInput -> {
             try {
-                byteBuffer.clear();
-                byteBuffer
-                        .putFloat(quaternion.getX())
-                        .putFloat(quaternion.getY())
-                        .putFloat(quaternion.getZ())
-                        .putFloat(quaternion.getW());
-                outSocket.write(byteBuffer.array());
+                outSocket.write(gameInput.getType());
+                outSocket.write(gameInput.getPayload().array());
             } catch (Exception e) {
-                throw new RuntimeException("Can't send quaternion", e);
+                throw new RuntimeException("Can't send game input", e);
             }
         };
     }

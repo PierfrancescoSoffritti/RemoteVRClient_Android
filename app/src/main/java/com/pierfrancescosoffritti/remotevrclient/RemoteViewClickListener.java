@@ -55,7 +55,7 @@ public class RemoteViewClickListener implements View.OnLongClickListener {
         );
     }
 
-    private void enterFullScreen() {
+    public void enterFullScreen() {
         mActionBar.hide();
         mTabs.setVisibility(View.GONE);
 
@@ -69,7 +69,7 @@ public class RemoteViewClickListener implements View.OnLongClickListener {
         mTabs.invalidate();
     }
 
-    private void exitFullScreen() {
+    public void exitFullScreen() {
         mActionBar.show();
         mTabs.setVisibility(View.VISIBLE);
 

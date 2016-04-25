@@ -49,26 +49,6 @@ public class MainActivity extends AppCompatActivity {
                 new Pair(gameFragment, getString(R.string.game)),
                 new Pair(logFragment, getString(R.string.log))
         );
-
-        DecimalFormat normalFormatter = new DecimalFormat("##.000");
-
-//        ConsoleLogger logger = new ConsoleLogger();
-//        MyOrientationProvider orientationProvider = new MyOrientationProvider(this);
-//        Observable.interval(50, TimeUnit.MILLISECONDS, Schedulers.io())
-//                .map(tick -> orientationProvider.getQuaternion())
-//                .subscribeOn(Schedulers.io())
-//                .doOnSubscribe(orientationProvider::start)
-//                .doOnUnsubscribe(orientationProvider::stop)
-//                .doOnSubscribe(logger::register)
-//                .doOnUnsubscribe(logger::unregister)
-//                .doOnNext((quaternion) -> LoggerBus.getInstance().post(
-//                        new LoggerBus.Log("Quaternion "
-//                                +"x: " +normalFormatter.format(quaternion.getX())
-//                                +" y: " +normalFormatter.format(quaternion.getY())
-//                                +" z: " +normalFormatter.format(quaternion.getZ())
-//                                +" w: " +normalFormatter.format(quaternion.getW()),
-//                                "sender", 0)))
-//                .subscribe();
     }
 
     private Fragment getFragment(Bundle savedInstanceState, Fragment fragment, String tag) {

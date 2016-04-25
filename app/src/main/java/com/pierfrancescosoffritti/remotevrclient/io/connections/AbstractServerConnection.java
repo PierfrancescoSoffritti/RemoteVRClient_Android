@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient.connections;
+package com.pierfrancescosoffritti.remotevrclient.io.connections;
 
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 

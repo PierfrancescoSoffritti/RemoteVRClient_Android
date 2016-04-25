@@ -8,17 +8,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
+import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
 import com.pierfrancescosoffritti.remotevrclient.RemoteViewClickListener;
+import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
-import com.pierfrancescosoffritti.remotevrclient.connections.ServerConnection;
+import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerConnection;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.MyOrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
@@ -44,6 +47,8 @@ public class GameFragment extends BaseFragment {
     @Bind(R.id.connected_view) View connectedView;
     @Bind(R.id.not_connected_view) View notConnectedView;
 
+    private RemoteViewClickListener fullScreenManager;
+
     private FPSCounter fpsCounter;
 
     // toolbar buttons, inflated manually.
@@ -68,8 +73,9 @@ public class GameFragment extends BaseFragment {
 
         orientationProvider = new MyOrientationProvider(getContext());
 
-        // when clicked goes full screen. TODO do better
-        remoteVRView.setOnLongClickListener(new RemoteViewClickListener(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout)));
+        // when long clicked goes full screen.
+        fullScreenManager = new RemoteViewClickListener(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout));
+        remoteVRView.setOnLongClickListener(fullScreenManager);
 
         return view;
     }
@@ -136,12 +142,19 @@ public class GameFragment extends BaseFragment {
                         .subscribe(bitmap -> remoteVRView.updateImage(bitmap), Throwable::printStackTrace);
 
                 // game input
+                // gyro
                 Observable.interval(16, TimeUnit.MILLISECONDS, Schedulers.io())
                         .map(tick -> orientationProvider.getQuaternion())
+                        .map(quaternion -> GyroInput.getInstance().putPayload(quaternion))
                         .subscribeOn(Schedulers.io())
                         .doOnSubscribe(orientationProvider::start)
                         .doOnUnsubscribe(orientationProvider::stop)
-                        //.doOnNext((quaternion) -> LoggerBus.getInstance().post(new LoggerBus.Log("Quaternion sent", LOG_TAG)))
+                        .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
+
+                // touch
+                remoteVRView.getPublishSubject()
+                        .filter(event -> event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP)
+                        .map(event -> TouchInput.getInstance().putPayload(event))
                         .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
             }
         }.start();
@@ -177,6 +190,8 @@ public class GameFragment extends BaseFragment {
     @SuppressWarnings("unused")
     @Subscribe
     public void onServerDisconnected(Events.ServerDisconnected e) {
+        fullScreenManager.exitFullScreen();
+
         connectedView.setVisibility(View.GONE);
         notConnectedView.setVisibility(View.VISIBLE);
         connectButton.setVisibility(View.VISIBLE);

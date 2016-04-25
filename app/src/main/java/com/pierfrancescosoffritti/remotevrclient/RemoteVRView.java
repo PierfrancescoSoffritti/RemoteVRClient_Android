@@ -5,13 +5,18 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
+
+import rx.subjects.PublishSubject;
 
 /**
  * Created by  Pierfrancesco on 02/03/2016.
  */
 public class RemoteVRView extends View {
     private Bitmap mBitmap;
+
+    private PublishSubject<MotionEvent> publishSubject = PublishSubject.create();
 
     public RemoteVRView(Context context) {
         super(context);
@@ -39,7 +44,17 @@ public class RemoteVRView extends View {
         }
     }
 
-    private double drawBitmap( Canvas canvas ) {
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        publishSubject.onNext(event);
+        return super.onTouchEvent(event);
+    }
+
+    public PublishSubject<MotionEvent> getPublishSubject() {
+        return publishSubject;
+    }
+
+    private double drawBitmap(Canvas canvas ) {
         // TODO images will have 2 known sizes, for landscape and portrait, so this will be moved out from here
         double viewWidth = canvas.getWidth();
         double viewHeight = canvas.getHeight();
