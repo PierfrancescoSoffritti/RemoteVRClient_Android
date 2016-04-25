@@ -9,4 +9,7 @@ public class Events {
 
     public static class ServerConnected {
     }
+
+    public static class DisconnectServer {
+    }
 }

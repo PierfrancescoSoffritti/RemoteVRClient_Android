@@ -18,7 +18,7 @@ import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
-import com.pierfrancescosoffritti.remotevrclient.RemoteViewClickListener;
+import com.pierfrancescosoffritti.remotevrclient.FullScreenManager;
 import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerConnection;
@@ -47,7 +47,7 @@ public class GameFragment extends BaseFragment {
     @Bind(R.id.connected_view) View connectedView;
     @Bind(R.id.not_connected_view) View notConnectedView;
 
-    private RemoteViewClickListener fullScreenManager;
+    private FullScreenManager fullScreenManager;
 
     private FPSCounter fpsCounter;
 
@@ -72,10 +72,10 @@ public class GameFragment extends BaseFragment {
         fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
 
         orientationProvider = new MyOrientationProvider(getContext());
+        orientationProvider.start();
 
         // when long clicked goes full screen.
-        fullScreenManager = new RemoteViewClickListener(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout));
-        remoteVRView.setOnLongClickListener(fullScreenManager);
+        fullScreenManager = new FullScreenManager(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout));
 
         return view;
     }
@@ -147,8 +147,8 @@ public class GameFragment extends BaseFragment {
                         .map(tick -> orientationProvider.getQuaternion())
                         .map(quaternion -> GyroInput.getInstance().putPayload(quaternion))
                         .subscribeOn(Schedulers.io())
-                        .doOnSubscribe(orientationProvider::start)
-                        .doOnUnsubscribe(orientationProvider::stop)
+                        //.doOnSubscribe(orientationProvider::start)
+                        //.doOnUnsubscribe(orientationProvider::stop)
                         .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
 
                 // touch
@@ -176,11 +176,14 @@ public class GameFragment extends BaseFragment {
     public void onDestroy() {
         super.onDestroy();
         serverConnection.disconnect();
+        orientationProvider.stop();
     }
 
     @SuppressWarnings("unused")
     @Subscribe
     public void onServerConnected(Events.ServerConnected e) {
+        fullScreenManager.enterFullScreen();
+
         connectedView.setVisibility(View.VISIBLE);
         notConnectedView.setVisibility(View.GONE);
         connectButton.setVisibility(View.GONE);
@@ -196,5 +199,11 @@ public class GameFragment extends BaseFragment {
         notConnectedView.setVisibility(View.VISIBLE);
         connectButton.setVisibility(View.VISIBLE);
         disconnectButton.setVisibility(View.GONE);
+    }
+
+    @SuppressWarnings("unused")
+    @Subscribe
+    public void disconnectServer(Events.DisconnectServer e) {
+        if(serverConnection != null) serverConnection.disconnect();
     }
 }

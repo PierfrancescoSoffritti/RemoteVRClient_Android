@@ -5,8 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+
+import com.pierfrancescosoffritti.remotevrclient.utils.SwipeDetector;
 
 import rx.subjects.PublishSubject;
 
@@ -47,8 +50,20 @@ public class RemoteVRView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         publishSubject.onNext(event);
+        swipeDetector.onTouchEvent(event);
+
+        if(event.getAction() == MotionEvent.ACTION_DOWN)
+            return true;
+
         return super.onTouchEvent(event);
     }
+
+    private final GestureDetector swipeDetector = new GestureDetector(getContext(), new SwipeDetector(){
+        @Override
+        public void onSwipeBottom() {
+            EventBus.getInstance().post(new Events.DisconnectServer());
+        }
+    });
 
     public PublishSubject<MotionEvent> getPublishSubject() {
         return publishSubject;

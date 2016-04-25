@@ -4,7 +4,6 @@ import android.content.Context;
 import android.hardware.SensorManager;
 
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvider.ImprovedOrientationSensor1Provider;
-import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvider.ImprovedOrientationSensor2Provider;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvider.OrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Quaternion;
 

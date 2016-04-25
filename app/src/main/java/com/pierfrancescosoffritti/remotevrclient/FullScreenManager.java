@@ -7,30 +7,16 @@ import android.view.View;
 /**
  * Created by  Pierfrancesco on 22/03/2016.
  */
-public class RemoteViewClickListener implements View.OnLongClickListener {
+public class FullScreenManager {
 
     private Activity mContext;
     private ActionBar mActionBar;
     private View mTabs;
 
-    private boolean isFullScreen = false;
-
-    public RemoteViewClickListener(Activity context, ActionBar supportActionBar, View tabs) {
+    public FullScreenManager(Activity context, ActionBar supportActionBar, View tabs) {
         mContext = context;
         mActionBar = supportActionBar;
         mTabs = tabs;
-    }
-
-    @Override
-    public boolean onLongClick(View view) {
-        if(isFullScreen)
-            exitFullScreen();
-        else
-            enterFullScreen();
-
-        isFullScreen = !isFullScreen;
-
-        return true;
     }
 
     // This snippet hides the system bars.
