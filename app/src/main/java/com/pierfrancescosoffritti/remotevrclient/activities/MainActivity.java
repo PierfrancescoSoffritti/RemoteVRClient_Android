@@ -7,22 +7,15 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Pair;
+import android.view.WindowManager;
 
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.adapters.ViewPagerAdapter;
 import com.pierfrancescosoffritti.remotevrclient.fragments.GameFragment;
 import com.pierfrancescosoffritti.remotevrclient.fragments.LogFragment;
-import com.pierfrancescosoffritti.remotevrclient.logging.ConsoleLogger;
-import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
-import com.pierfrancescosoffritti.remotevrclient.sensorFusion.MyOrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.utils.Fragments;
 
-import java.text.DecimalFormat;
-import java.util.concurrent.TimeUnit;
-
 import butterknife.ButterKnife;
-import rx.Observable;
-import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         ButterKnife.bind(this);
 

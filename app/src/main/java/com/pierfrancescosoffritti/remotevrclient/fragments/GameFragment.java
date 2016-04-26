@@ -69,6 +69,8 @@ public class GameFragment extends BaseFragment {
 
         setupToolbar();
 
+        notConnectedView.setOnClickListener((v) -> startClient());
+
         fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
 
         orientationProvider = new MyOrientationProvider(getContext());
