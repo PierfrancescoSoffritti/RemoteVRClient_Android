@@ -4,8 +4,10 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -15,18 +17,20 @@ import android.view.ViewGroup;
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
-import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
+import com.pierfrancescosoffritti.remotevrclient.FullScreenManager;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
-import com.pierfrancescosoffritti.remotevrclient.FullScreenManager;
-import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerConnection;
+import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
+import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.MyOrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
+import com.pierfrancescosoffritti.remotevrclient.utils.SnackbarFactory;
 import com.squareup.otto.Subscribe;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 import butterknife.Bind;
@@ -46,6 +50,7 @@ public class GameFragment extends BaseFragment {
     @Bind(R.id.remotevr_view) RemoteVRView remoteVRView;
     @Bind(R.id.connected_view) View connectedView;
     @Bind(R.id.not_connected_view) View notConnectedView;
+    @Bind(R.id.connection_in_progress_view) View connectionInProgressView;
 
     private FullScreenManager fullScreenManager;
 
@@ -121,11 +126,31 @@ public class GameFragment extends BaseFragment {
         String serverIP = sharedPreferences.getString(getString(R.string.server_ip), "192.168.1.23");
         int serverPort = Integer.parseInt(sharedPreferences.getString(getString(R.string.server_port), ServerConnection.DEFAULT_PORT + ""));
 
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        getActivity().getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
+        int screenWidth = displayMetrics.widthPixels;
+        int screenHeight = displayMetrics.heightPixels;
+
         PerformanceMonitor mPerformanceMonitor = new PerformanceMonitor();
 
+        // it's not nice to have this thread, but for now it's ok
         new Thread() {
             public void run() {
-                serverConnection = new ServerConnection(serverIP, serverPort);
+                try {
+                    serverConnection = new ServerConnection(serverIP, serverPort);
+                } catch (IOException e) {
+                    LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass() + " . " +e.getMessage(), LOG_TAG, LoggerBus.Log.ERROR));
+                    SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_connect, -1, Snackbar.LENGTH_LONG);
+                    return;
+                }
+
+                // send screen resolution
+                try {
+                    serverConnection.sendScreenResolution(screenWidth, screenHeight);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    serverConnection.disconnect();
+                }
 
                 // game video
                 serverConnection
@@ -141,6 +166,7 @@ public class GameFragment extends BaseFragment {
                         .doOnSubscribe(() -> LoggerBus.getInstance().post(new LoggerBus.Log("Started connection with server.", LOG_TAG)))
 
                         .observeOn(AndroidSchedulers.mainThread())
+                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_receiving_images, -1, Snackbar.LENGTH_LONG))
                         .subscribe(bitmap -> remoteVRView.updateImage(bitmap), Throwable::printStackTrace);
 
                 // game input
@@ -151,12 +177,14 @@ public class GameFragment extends BaseFragment {
                         .subscribeOn(Schedulers.io())
                         //.doOnSubscribe(orientationProvider::start)
                         //.doOnUnsubscribe(orientationProvider::stop)
+                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_gyro, -1, Snackbar.LENGTH_LONG))
                         .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
 
                 // touch
                 remoteVRView.getPublishSubject()
                         .filter(event -> event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP)
                         .map(event -> TouchInput.getInstance().putPayload(event))
+                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_touch, -1, Snackbar.LENGTH_LONG))
                         .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
             }
         }.start();
@@ -177,8 +205,17 @@ public class GameFragment extends BaseFragment {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        serverConnection.disconnect();
+        if(serverConnection != null)
+            serverConnection.disconnect();
         orientationProvider.stop();
+    }
+
+    @SuppressWarnings("unused")
+    @Subscribe
+    public void onServerConnecting(Events.ServerConnecting e) {
+        connectionInProgressView.setVisibility(View.VISIBLE);
+        notConnectedView.setVisibility(View.GONE);
+        connectedView.setVisibility(View.GONE);
     }
 
     @SuppressWarnings("unused")
@@ -186,6 +223,7 @@ public class GameFragment extends BaseFragment {
     public void onServerConnected(Events.ServerConnected e) {
         fullScreenManager.enterFullScreen();
 
+        connectionInProgressView.setVisibility(View.GONE);
         connectedView.setVisibility(View.VISIBLE);
         notConnectedView.setVisibility(View.GONE);
         connectButton.setVisibility(View.GONE);
@@ -197,6 +235,7 @@ public class GameFragment extends BaseFragment {
     public void onServerDisconnected(Events.ServerDisconnected e) {
         fullScreenManager.exitFullScreen();
 
+        connectionInProgressView.setVisibility(View.GONE);
         connectedView.setVisibility(View.GONE);
         notConnectedView.setVisibility(View.VISIBLE);
         connectButton.setVisibility(View.VISIBLE);

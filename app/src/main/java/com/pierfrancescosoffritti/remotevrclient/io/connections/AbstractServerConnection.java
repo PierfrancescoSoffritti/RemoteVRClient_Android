@@ -1,12 +1,17 @@
 package com.pierfrancescosoffritti.remotevrclient.io.connections;
 
+import com.pierfrancescosoffritti.remotevrclient.EventBus;
+import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
+import java.net.SocketTimeoutException;
 
 /**
  * Created by Pierfrancesco on 18/03/2016.
@@ -23,45 +28,39 @@ public abstract class AbstractServerConnection {
      * Opens the TCP connection with the server, with the corresponding Input and Output streams.
      * @param ip the server IP
      * @param port the server PORT
+     * @throws IOException
      */
-    protected AbstractServerConnection(String ip, int port) {
+    protected AbstractServerConnection(String ip, int port) throws IOException {
         connect(ip, port);
         inSocket = getInputStream();
         outSocket = getOutputStream();
     }
 
-    private void connect(String ip, int port) {
-        try {
-            mSocket = new Socket(InetAddress.getByName(ip), port);
-            mSocket.setSoTimeout(0);
+    private void connect(String ip, int port) throws IOException {
+        SocketAddress sockaddr = new InetSocketAddress(InetAddress.getByName(ip), port);
+        mSocket = new Socket();
+        EventBus.getInstance().post(new Events.ServerConnecting());
 
-            LoggerBus.getInstance().post(new LoggerBus.Log("Connected to " + mSocket, LOG_TAG));
-        } catch (Exception e) {
-            LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass(), LOG_TAG, LoggerBus.Log.ERROR));
-            e.printStackTrace();
+        try {
+            mSocket.connect(sockaddr, 5000);
+        } catch (SocketTimeoutException e) {
+            EventBus.getInstance().post(new Events.ServerDisconnected());
+            throw new IOException(e);
         }
+
+        LoggerBus.getInstance().post(new LoggerBus.Log("Connected to " + mSocket, LOG_TAG));
     }
 
-    private DataInputStream getInputStream() {
-        try {
-            if(inSocket == null)
-                inSocket = new DataInputStream(mSocket.getInputStream());
-        } catch (Exception e) {
-            LoggerBus.getInstance().post(new LoggerBus.Log("Error creating input stream: " + e.getClass(), LOG_TAG, LoggerBus.Log.ERROR));
-            e.printStackTrace();
-        }
+    private DataInputStream getInputStream() throws IOException {
+        if(inSocket == null)
+            inSocket = new DataInputStream(mSocket.getInputStream());
 
         return inSocket;
     }
 
-    private DataOutputStream getOutputStream() {
-        try {
-            if(outSocket == null)
-                outSocket = new DataOutputStream(mSocket.getOutputStream());
-        } catch (IOException e) {
-            LoggerBus.getInstance().post(new LoggerBus.Log("Error creating output stream: " + e.getClass(), LOG_TAG, LoggerBus.Log.ERROR));
-            e.printStackTrace();
-        }
+    private DataOutputStream getOutputStream() throws IOException {
+        if(outSocket == null)
+            outSocket = new DataOutputStream(mSocket.getOutputStream());
 
         return outSocket;
     }

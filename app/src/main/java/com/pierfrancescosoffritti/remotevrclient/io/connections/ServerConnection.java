@@ -8,6 +8,8 @@ import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GameInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 
+import java.io.IOException;
+
 import rx.Observable;
 import rx.functions.Action1;
 
@@ -24,8 +26,18 @@ public class ServerConnection extends AbstractServerConnection {
      * @param ip the server IP
      * @param port the server PORT
      */
-    public ServerConnection(String ip, int port) {
+    public ServerConnection(String ip, int port) throws IOException {
         super(ip, port);
+    }
+
+    /**
+     * Sends the resolution of the screen (in pixel) to the server.
+     * @param screenWidth
+     * @param screenHeight
+     */
+    public void sendScreenResolution(int screenWidth, int screenHeight) throws IOException {
+        outSocket.writeInt(screenWidth);
+        outSocket.writeInt(screenHeight);
     }
 
     /**

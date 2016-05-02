@@ -9,4 +9,9 @@
     <string name="server_ip">Server IP</string>
     <string name="server_port">Server port</string>
     <string name="title_activity_preferences">Settings</string>
+    <string name="error_receiving_images">An error occurred while receiving images</string>
+    <string name="error_sending_gyro">An error occurred while sending gyro data</string>
+    <string name="error_sending_touch">An error occurred while sending touch data</string>
+    <string name="error_cant_connect">Can\'t connect to the server</string>
+    <string name="connecting">Connecting ..</string>
 </resources>
