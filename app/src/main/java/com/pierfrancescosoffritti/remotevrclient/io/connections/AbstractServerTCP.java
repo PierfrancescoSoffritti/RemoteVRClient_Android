@@ -15,8 +15,9 @@ import java.net.SocketTimeoutException;
 
 /**
  * Created by Pierfrancesco on 18/03/2016.
+ * This class is responsible for handling a TCP connection with the server.
  */
-public abstract class AbstractServerConnection {
+public abstract class AbstractServerTCP {
 
     protected final String LOG_TAG = getClass().getSimpleName();
 
@@ -30,19 +31,19 @@ public abstract class AbstractServerConnection {
      * @param port the server PORT
      * @throws IOException
      */
-    protected AbstractServerConnection(String ip, int port) throws IOException {
+    protected AbstractServerTCP(String ip, int port) throws IOException {
         connect(ip, port);
         inSocket = getInputStream();
         outSocket = getOutputStream();
     }
 
     private void connect(String ip, int port) throws IOException {
-        SocketAddress sockaddr = new InetSocketAddress(InetAddress.getByName(ip), port);
+        SocketAddress socketAddress = new InetSocketAddress(InetAddress.getByName(ip), port);
         mSocket = new Socket();
         EventBus.getInstance().post(new Events.ServerConnecting());
 
         try {
-            mSocket.connect(sockaddr, 5000);
+            mSocket.connect(socketAddress, 5000);
         } catch (SocketTimeoutException e) {
             EventBus.getInstance().post(new Events.ServerDisconnected());
             throw new IOException(e);
@@ -82,12 +83,15 @@ public abstract class AbstractServerConnection {
         }
     }
 
-    public boolean isConnected() {
-        return mSocket.isConnected();
-    }
-
     /**
      * this method is called automatically after the TCP connection with the server has been closed successfully
      */
-    protected abstract void onDisconnected();
+    private void onDisconnected() {
+        LoggerBus.getInstance().post(new LoggerBus.Log("Ended connection with server.", LOG_TAG));
+        EventBus.getInstance().post(new Events.ServerDisconnected());
+    }
+
+    public boolean isConnected() {
+        return mSocket.isConnected();
+    }
 }

@@ -3,8 +3,6 @@ package com.pierfrancescosoffritti.remotevrclient.io.connections;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.pierfrancescosoffritti.remotevrclient.EventBus;
-import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GameInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 
@@ -15,9 +13,9 @@ import rx.functions.Action1;
 
 /**
  * Created by  Pierfrancesco on 06/03/2016.
- * This object represents a TCP connection with the server.
+ * This class is responsible for sending/receiving data to/from the server, on a TCP connection.
  */
-public class ServerConnection extends AbstractServerConnection {
+public class ServerTCP extends AbstractServerTCP implements ServerIO {
     protected final String LOG_TAG = getClass().getSimpleName();
     public static final int DEFAULT_PORT = 2099;
 
@@ -26,24 +24,17 @@ public class ServerConnection extends AbstractServerConnection {
      * @param ip the server IP
      * @param port the server PORT
      */
-    public ServerConnection(String ip, int port) throws IOException {
+    public ServerTCP(String ip, int port) throws IOException {
         super(ip, port);
     }
 
-    /**
-     * Sends the resolution of the screen (in pixel) to the server.
-     * @param screenWidth
-     * @param screenHeight
-     */
+    @Override
     public void sendScreenResolution(int screenWidth, int screenHeight) throws IOException {
         outSocket.writeInt(screenWidth);
         outSocket.writeInt(screenHeight);
     }
 
-    /**
-     * The server output is a stream of images, representing the stream video of the game
-     * @return an Observable representing the server output, which is a stream of images.
-     */
+    @Override
     public Observable<Bitmap> getServerOutput() {
         Observable.OnSubscribe<Bitmap> onSubscribe = subscriber -> {
             try {
@@ -68,10 +59,7 @@ public class ServerConnection extends AbstractServerConnection {
         return Observable.create(onSubscribe);
     }
 
-    /**
-     * The server input is a stream of bytes, representing rotation (quaternions) or touch interactions
-     * @return an Action1 containing the onNext() logic. Takes a {@link GameInput} and sends its type and payload to the server.
-     */
+    @Override
     public Action1<GameInput> getServerInput() {
         return gameInput -> {
             try {
@@ -81,11 +69,5 @@ public class ServerConnection extends AbstractServerConnection {
                 throw new RuntimeException("Can't send game input", e);
             }
         };
-    }
-
-    @Override
-    protected void onDisconnected() {
-        LoggerBus.getInstance().post(new LoggerBus.Log("Ended connection with server.", LOG_TAG));
-        EventBus.getInstance().post(new Events.ServerDisconnected());
     }
 }

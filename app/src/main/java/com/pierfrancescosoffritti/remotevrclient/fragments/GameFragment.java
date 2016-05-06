@@ -21,7 +21,8 @@ import com.pierfrancescosoffritti.remotevrclient.FullScreenManager;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
 import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
-import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerConnection;
+import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerIO;
+import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerTCP;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
 import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
@@ -43,7 +44,7 @@ public class GameFragment extends BaseFragment {
 
     protected final String LOG_TAG = getClass().getSimpleName();
 
-    private ServerConnection serverConnection;
+    private ServerIO serverConnection;
 
     private MyOrientationProvider orientationProvider;
 
@@ -124,7 +125,7 @@ public class GameFragment extends BaseFragment {
     private void startClient() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
         String serverIP = sharedPreferences.getString(getString(R.string.server_ip), "192.168.1.23");
-        int serverPort = Integer.parseInt(sharedPreferences.getString(getString(R.string.server_port), ServerConnection.DEFAULT_PORT + ""));
+        int serverPort = Integer.parseInt(sharedPreferences.getString(getString(R.string.server_port), ServerTCP.DEFAULT_PORT + ""));
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
@@ -137,55 +138,59 @@ public class GameFragment extends BaseFragment {
         new Thread() {
             public void run() {
                 try {
-                    serverConnection = new ServerConnection(serverIP, serverPort);
+                    //serverConnection = new ServerUDP(serverIP, serverPort, 2098);
+                    serverConnection = new ServerTCP(serverIP, serverPort);
                 } catch (IOException e) {
                     LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass() + " . " +e.getMessage(), LOG_TAG, LoggerBus.Log.ERROR));
                     SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_connect, -1, Snackbar.LENGTH_LONG);
                     return;
                 }
 
-                // send screen resolution
                 try {
+                    // send screen resolution
                     serverConnection.sendScreenResolution(screenWidth, screenHeight);
+
+
+                    // game video
+                    serverConnection
+                            .getServerOutput()
+
+                            // performance monitor
+                            .doOnSubscribe(mPerformanceMonitor::start)
+                            .doOnNext(bitmap -> mPerformanceMonitor.incCounter())
+                            .doOnUnsubscribe(mPerformanceMonitor::stop)
+
+                            .subscribeOn(Schedulers.io())
+                            .doOnSubscribe(() -> EventBus.getInstance().post(new Events.ServerConnected()))
+                            .doOnSubscribe(() -> LoggerBus.getInstance().post(new LoggerBus.Log("Started connection with server.", LOG_TAG)))
+
+                            .observeOn(AndroidSchedulers.mainThread())
+                            .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_receiving_images, -1, Snackbar.LENGTH_LONG))
+                            .subscribe(bitmap -> remoteVRView.updateImage(bitmap), Throwable::printStackTrace);
+
+                    // game input
+                    // gyro
+                    Observable.interval(16, TimeUnit.MILLISECONDS, Schedulers.io())
+                            .map(tick -> orientationProvider.getQuaternion())
+                            .map(quaternion -> GyroInput.getInstance().putPayload(quaternion))
+                            .subscribeOn(Schedulers.io())
+                            //.doOnSubscribe(orientationProvider::start)
+                            //.doOnUnsubscribe(orientationProvider::stop)
+                            .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_gyro, -1, Snackbar.LENGTH_LONG))
+                            .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
+
+                    // touch
+                    remoteVRView.getPublishSubject()
+                            .observeOn(Schedulers.io())
+                            .filter(event -> event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP)
+                            .map(event -> TouchInput.getInstance().putPayload(event))
+                            .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_touch, -1, Snackbar.LENGTH_LONG))
+                            .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
+
                 } catch (IOException e) {
                     e.printStackTrace();
                     serverConnection.disconnect();
                 }
-
-                // game video
-                serverConnection
-                        .getServerOutput()
-
-                        // performance monitor
-                        .doOnSubscribe(mPerformanceMonitor::start)
-                        .doOnNext(bitmap -> mPerformanceMonitor.incCounter())
-                        .doOnUnsubscribe(mPerformanceMonitor::stop)
-
-                        .subscribeOn(Schedulers.io())
-                        .doOnSubscribe(() -> EventBus.getInstance().post(new Events.ServerConnected()))
-                        .doOnSubscribe(() -> LoggerBus.getInstance().post(new LoggerBus.Log("Started connection with server.", LOG_TAG)))
-
-                        .observeOn(AndroidSchedulers.mainThread())
-                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_receiving_images, -1, Snackbar.LENGTH_LONG))
-                        .subscribe(bitmap -> remoteVRView.updateImage(bitmap), Throwable::printStackTrace);
-
-                // game input
-                // gyro
-                Observable.interval(16, TimeUnit.MILLISECONDS, Schedulers.io())
-                        .map(tick -> orientationProvider.getQuaternion())
-                        .map(quaternion -> GyroInput.getInstance().putPayload(quaternion))
-                        .subscribeOn(Schedulers.io())
-                        //.doOnSubscribe(orientationProvider::start)
-                        //.doOnUnsubscribe(orientationProvider::stop)
-                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_gyro, -1, Snackbar.LENGTH_LONG))
-                        .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
-
-                // touch
-                remoteVRView.getPublishSubject()
-                        .filter(event -> event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP)
-                        .map(event -> TouchInput.getInstance().putPayload(event))
-                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_touch, -1, Snackbar.LENGTH_LONG))
-                        .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
             }
         }.start();
     }
