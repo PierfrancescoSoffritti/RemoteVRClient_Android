@@ -4,7 +4,9 @@ import android.app.Activity;
 import android.view.View;
 
 /**
- * Class responsible for changing the view to full screen and non-full screen
+ * Class responsible for changing the view from full screen to non-full screen and vice versa.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class FullScreenManager {
 

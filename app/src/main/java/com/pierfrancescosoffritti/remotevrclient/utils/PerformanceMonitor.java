@@ -8,7 +8,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Created by Pierfrancesco on 29/02/2016.
+ * This class produces log events containing info about <i>Frame received from the server / second</i> <b>(FPS)</b> and <b>average FPS</b>.
+ *
+ * @author Pierfrancesco Soffritti
  */
 
 public class PerformanceMonitor {
@@ -29,14 +31,14 @@ public class PerformanceMonitor {
 
     public void stop() {
         timer.cancel();
-        LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +task.avg +" frame/second" , LOG_TAG, LoggerBus.Log.STATS_AVG));
+        LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +task.avg +" frame/second" , LOG_TAG, LoggerBus.Log.FPS_AVG));
     }
 
     public double getAvg() {
         return task.avg;
     }
 
-    public void incCounter() {
+    public void newFrameReceived() {
         task.incCounter();
     }
 
@@ -61,8 +63,8 @@ public class PerformanceMonitor {
             else
                 avg = sum;
 
-            LoggerBus.getInstance().post(new LoggerBus.Log(+counter +" frame/second", LOG_TAG, LoggerBus.Log.STATS_INST));
-            LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +avg +" frame/second" , LOG_TAG, LoggerBus.Log.STATS_AVG));
+            LoggerBus.getInstance().post(new LoggerBus.Log(+counter +" frame/second", LOG_TAG, LoggerBus.Log.FPS));
+            LoggerBus.getInstance().post(new LoggerBus.Log("AVG: " +avg +" frame/second" , LOG_TAG, LoggerBus.Log.FPS_AVG));
             history.add(counter);
             counter = 0;
         }

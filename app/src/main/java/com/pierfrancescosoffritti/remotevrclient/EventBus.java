@@ -6,7 +6,7 @@ import android.os.Looper;
 import com.squareup.otto.Bus;
 
 /**
- * Created by Pierfrancesco on 02/10/2015.
+ * @author Pierfrancesco Soffritti
  */
 public class EventBus {
 

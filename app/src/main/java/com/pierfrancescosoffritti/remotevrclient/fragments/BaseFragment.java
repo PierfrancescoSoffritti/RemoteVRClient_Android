@@ -5,8 +5,9 @@ import android.support.v4.app.Fragment;
 import butterknife.ButterKnife;
 
 /**
- * Created by  Pierfrancesco on 06/03/2016.
  * abstract fragment with basic functionalities
+ *
+ * @author Pierfrancesco Soffritti
  */
 public abstract class BaseFragment extends Fragment {
 

@@ -6,8 +6,8 @@
     <string name="log">Log</string>
     <string name="press">Press</string>
     <string name="to_connect">to connect</string>
-    <string name="server_ip">Server IP</string>
-    <string name="server_port">Server port</string>
+    <string name="server_ip_key">Server IP</string>
+    <string name="server_port_key">Server port</string>
     <string name="title_activity_preferences">Settings</string>
     <string name="error_receiving_images">An error occurred while receiving images</string>
     <string name="error_sending_gyro">An error occurred while sending gyro data</string>
@@ -16,4 +16,8 @@
     <string name="connecting">Connecting ..</string>
     <string name="error_cant_send_screen_res">Can\'t send screen resolution</string>
     <string name="settings">Settings</string>
+    <string name="use_TCP_key">Use TCP</string>
+    <string name="server_ip">Server IP</string>
+    <string name="server_port">Server port</string>
+    <string name="use_TCP">Use TCP</string>
 </resources>

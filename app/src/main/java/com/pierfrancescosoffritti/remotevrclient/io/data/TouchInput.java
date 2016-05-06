@@ -5,7 +5,11 @@ import android.view.MotionEvent;
 import java.nio.ByteBuffer;
 
 /**
- * Created by  Pierfrancesco on 25/04/2016.
+ * Represents a touch.
+ * <br/><br/>
+ * This class is a singleton so I can always use the same {@ByteBuffer} instance.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class TouchInput implements GameInput<MotionEvent> {
     private static TouchInput ourInstance = new TouchInput();
@@ -14,7 +18,7 @@ public class TouchInput implements GameInput<MotionEvent> {
         return ourInstance;
     }
 
-    ByteBuffer byteBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+    private ByteBuffer byteBuffer = ByteBuffer.allocate(PAYLOAD_SIZE);
 
     private TouchInput() {
     }

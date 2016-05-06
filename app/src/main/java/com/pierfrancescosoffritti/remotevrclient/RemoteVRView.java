@@ -14,7 +14,9 @@ import com.pierfrancescosoffritti.remotevrclient.utils.SwipeDetector;
 import rx.subjects.PublishSubject;
 
 /**
- * Custom View responsible for showing the game images and receiving game inputs
+ * Custom View responsible for showing game images and detecting game inputs.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class RemoteVRView extends View {
 

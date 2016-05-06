@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
-import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
+import com.pierfrancescosoffritti.remotevrclient.logging.FPSLogger;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
 import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerIO;
@@ -36,8 +36,9 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 /**
- * Created by  Pierfrancesco on 06/03/2016.
  * this fragment contains the game view and controls
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class GameFragment extends BaseFragment {
 
@@ -46,7 +47,7 @@ public class GameFragment extends BaseFragment {
     private ServerIO serverConnection;
     private MyOrientationProvider orientationProvider;
 
-    private FPSCounter fpsCounter;
+    private FPSLogger fpsLogger;
 
     @Bind(R.id.remote_vr_view) RemoteVRView remoteVRView;
 
@@ -79,7 +80,7 @@ public class GameFragment extends BaseFragment {
 
         notConnectedView.setOnClickListener((v) -> startClient());
 
-        fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
+        fpsLogger = new FPSLogger(ButterKnife.findById(view, R.id.fps_counter));
 
         orientationProvider = new MyOrientationProvider(getContext());
         orientationProvider.start();
@@ -93,8 +94,9 @@ public class GameFragment extends BaseFragment {
      */
     private void startClient() {
         SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getContext());
-        String serverIP = sharedPreferences.getString(getString(R.string.server_ip), "192.168.1.23");
-        int serverPort = Integer.parseInt(sharedPreferences.getString(getString(R.string.server_port), ServerTCP.DEFAULT_PORT + ""));
+        String serverIP = sharedPreferences.getString(getString(R.string.server_ip_key), "192.168.1.23");
+        int serverPort = Integer.parseInt(sharedPreferences.getString(getString(R.string.server_port_key), ServerTCP.DEFAULT_PORT + ""));
+        boolean useTCP = sharedPreferences.getBoolean(getString(R.string.use_TCP_key), true);
 
         DisplayMetrics displayMetrics = new DisplayMetrics();
         getActivity().getWindowManager().getDefaultDisplay().getRealMetrics(displayMetrics);
@@ -107,8 +109,10 @@ public class GameFragment extends BaseFragment {
         new Thread() {
             public void run() {
                 try {
-                    serverConnection = new ServerUDP(serverIP, serverPort, 2098);
-//                    serverConnection = new ServerTCP(serverIP, serverPort);
+                    if(useTCP)
+                        serverConnection = new ServerTCP(serverIP, serverPort);
+                    else
+                        serverConnection = new ServerUDP(serverIP, serverPort, 2098);
                 } catch (IOException e) {
                     LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass() + " . " +e.getMessage(), LOG_TAG, LoggerBus.Log.ERROR));
                     SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_connect, -1, Snackbar.LENGTH_LONG);
@@ -130,7 +134,7 @@ public class GameFragment extends BaseFragment {
 
                         // performance monitor
                         .doOnSubscribe(mPerformanceMonitor::start)
-                        .doOnNext(bitmap -> mPerformanceMonitor.incCounter())
+                        .doOnNext(bitmap -> mPerformanceMonitor.newFrameReceived())
                         .doOnUnsubscribe(mPerformanceMonitor::stop)
 
                         .subscribeOn(Schedulers.io())
@@ -165,13 +169,13 @@ public class GameFragment extends BaseFragment {
 
     @Override
     public void register() {
-        fpsCounter.register();
+        fpsLogger.register();
         EventBus.getInstance().register(this);
     }
 
     @Override
     public void unregister() {
-        fpsCounter.unregister();
+        fpsLogger.unregister();
         EventBus.getInstance().unregister(this);
     }
 

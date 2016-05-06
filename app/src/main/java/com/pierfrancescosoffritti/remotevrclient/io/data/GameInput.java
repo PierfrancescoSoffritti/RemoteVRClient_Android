@@ -7,16 +7,23 @@ import java.lang.annotation.RetentionPolicy;
 import java.nio.ByteBuffer;
 
 /**
- * Created by  Pierfrancesco on 25/04/2016.
+ * Defines a game input
+ *
+ * @author Pierfrancesco Soffritti
  */
 public interface GameInput<T> {
 
-    // both GameInputType buffers have the same size, so I can always read them with a single read call on the server.
-    int BUFFER_SIZE = 4*4;
+    /**
+     *  Payloads of different {@link GameInputType} must be of the same size.
+     */
+    int PAYLOAD_SIZE = 4*4;
 
     byte GYRO = 0;
     byte TOUCH = 1;
 
+    /**
+     * Defines the different inputs accepted by the game.
+     */
     @IntDef({GYRO, TOUCH})
     @Retention(RetentionPolicy.SOURCE)
     @interface GameInputType {}

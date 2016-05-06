@@ -9,8 +9,9 @@ import android.util.Log;
 import android.view.View;
 
 /**
- * Created by  Pierfrancesco on 16/12/2015.
  * Utility class from fragments
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class Fragments {
 

@@ -2,11 +2,17 @@ package com.pierfrancescosoffritti.remotevrclient.logging;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.IntDef;
 
 import com.squareup.otto.Bus;
 
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
 /**
- * Created by Pierfrancesco on 02/10/2015.
+ * EventBus for log events only.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class LoggerBus {
 
@@ -32,20 +38,32 @@ public class LoggerBus {
         bus.unregister(obj);
     }
 
-    public void post(final Object event) {
-        handler.post(() -> bus.post(event));
+    public void post(final Log log) {
+        handler.post(() -> bus.post(log));
     }
 
+    /**
+     * Class defining a log
+     *
+     * @author Pierfrancesco Soffritti
+     */
     public static class Log {
 
         public static final int NORMAL = 0;
         public static final int ERROR = 1;
-        public static final int STATS_INST = 2;
-        public static final int STATS_AVG = 3;
+        public static final int FPS = 2;
+        public static final int FPS_AVG = 3;
+
+        /**
+         * Defines the different types of log.
+         */
+        @IntDef({NORMAL, ERROR, FPS, FPS_AVG})
+        @Retention(RetentionPolicy.SOURCE)
+        @interface LogType {}
 
         private String mSender;
         private String mMessage;
-        private int mType;
+        @LogType private int mType;
 
         public Log(String message) {
             mMessage = message;
@@ -59,7 +77,7 @@ public class LoggerBus {
             mType = NORMAL;
         }
 
-        public Log(String message, String sender, int type) {
+        public Log(String message, String sender, @LogType int type) {
             this(message, sender);
             mType = type;
         }
@@ -72,7 +90,7 @@ public class LoggerBus {
             return mSender;
         }
 
-        public int getType() {
+        public @LogType int getType() {
             return mType;
         }
     }

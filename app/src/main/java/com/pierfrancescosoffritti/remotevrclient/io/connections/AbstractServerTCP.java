@@ -14,8 +14,9 @@ import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 
 /**
- * Created by Pierfrancesco on 18/03/2016.
  * This class is responsible for handling a TCP connection with the server.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public abstract class AbstractServerTCP {
 

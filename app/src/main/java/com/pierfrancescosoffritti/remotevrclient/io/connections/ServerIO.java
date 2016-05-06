@@ -13,13 +13,15 @@ import rx.functions.Action1;
  * This interface represents the contract with the server.
  * <br/>
  * Should be implemented by each class that wants to communicate with the server.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public interface ServerIO {
 
     /**
      * Sends the resolution of the screen (in pixel) to the server.
-     * @param screenWidth device screenWidth in pixels
-     * @param screenHeight device screenHeight in pixels
+     * @param screenWidth device screenWidth in pixels.
+     * @param screenHeight device screenHeight in pixels.
      */
     void sendScreenResolution(int screenWidth, int screenHeight) throws IOException;
 

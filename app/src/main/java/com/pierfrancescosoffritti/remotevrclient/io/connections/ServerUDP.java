@@ -26,6 +26,8 @@ import rx.functions.Action1;
  * <b>No form of quality/reliability control is implemented.</b>
  * <br/>
  * The current scope of the application is to work in a LAN, so it's good enough. For communication outside of a LAN a better protocol may be needed.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class ServerUDP implements ServerIO {
 
@@ -53,7 +55,7 @@ public class ServerUDP implements ServerIO {
         socket.setSoTimeout(SOCKET_TIMEOUT);
 
         serverAddress = new InetSocketAddress(InetAddress.getByName(serverIP), communicationPort);
-        outputPacket = new DatagramPacket(new byte[GameInput.BUFFER_SIZE], GameInput.BUFFER_SIZE, serverAddress);
+        outputPacket = new DatagramPacket(new byte[GameInput.PAYLOAD_SIZE], GameInput.PAYLOAD_SIZE, serverAddress);
         inputPacket = new DatagramPacket(new byte[100000], 100000, serverAddress);
 
         EventBus.getInstance().post(new Events.ServerConnecting());
@@ -149,13 +151,13 @@ public class ServerUDP implements ServerIO {
     @Override
     public Action1<GameInput> getServerInput() {
 
-        byte[] data = new byte[1+GameInput.BUFFER_SIZE];
+        byte[] data = new byte[1+GameInput.PAYLOAD_SIZE];
 
         return gameInput -> {
             try {
 
                 data[0] = gameInput.getType();
-                for(int i=0; i<GameInput.BUFFER_SIZE; i++)
+                for(int i = 0; i<GameInput.PAYLOAD_SIZE; i++)
                     data[i+1] = gameInput.getPayload().get(i);
 
                 outputPacket.setData(data);

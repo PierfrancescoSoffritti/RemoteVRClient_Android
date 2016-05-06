@@ -8,7 +8,9 @@ import android.view.View;
 import android.widget.TextView;
 
 /**
- * Created by  Pierfrancesco on 18/10/2015.
+ * Utility class for Snackbar
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class SnackbarFactory {
     /**

@@ -12,8 +12,9 @@ import rx.Observable;
 import rx.functions.Action1;
 
 /**
- * Created by  Pierfrancesco on 06/03/2016.
  * This class is responsible for sending/receiving data to/from the server, on a TCP connection.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class ServerTCP extends AbstractServerTCP implements ServerIO {
     protected final String LOG_TAG = getClass().getSimpleName();

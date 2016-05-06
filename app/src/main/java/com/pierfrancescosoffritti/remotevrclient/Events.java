@@ -1,7 +1,7 @@
 package com.pierfrancescosoffritti.remotevrclient;
 
 /**
- * Created by  Pierfrancesco on 06/03/2016.
+ * @author Pierfrancesco Soffritti
  */
 public class Events {
     public static class ServerConnecting {

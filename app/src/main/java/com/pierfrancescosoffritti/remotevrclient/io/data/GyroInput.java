@@ -5,7 +5,11 @@ import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Qua
 import java.nio.ByteBuffer;
 
 /**
- * Created by  Pierfrancesco on 25/04/2016.
+ * Represents a quaternion.
+ * <br/><br/>
+ * This class is a singleton so I can always use the same {@ByteBuffer} instance.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class GyroInput implements GameInput<Quaternion> {
     private static GyroInput ourInstance = new GyroInput();
@@ -14,7 +18,7 @@ public class GyroInput implements GameInput<Quaternion> {
         return ourInstance;
     }
 
-    ByteBuffer byteBuffer = ByteBuffer.allocate(BUFFER_SIZE);
+    private ByteBuffer byteBuffer = ByteBuffer.allocate(PAYLOAD_SIZE);
 
     private GyroInput() {
     }

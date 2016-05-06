@@ -16,8 +16,9 @@ import butterknife.Bind;
 import butterknife.ButterKnife;
 
 /**
- * Created by  Pierfrancesco on 06/03/2016.
  * fragment responsible for showing the logs
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class LogFragment extends BaseFragment implements ILogger {
 
@@ -52,9 +53,9 @@ public class LogFragment extends BaseFragment implements ILogger {
     @Override
     public void onLog(LoggerBus.Log log) {
         switch (log.getType()) {
-            case LoggerBus.Log.STATS_AVG:
+            case LoggerBus.Log.FPS_AVG:
                 break;
-            case LoggerBus.Log.STATS_INST:
+            case LoggerBus.Log.FPS:
                 break;
             case LoggerBus.Log.ERROR:
                 logView.append(Html.fromHtml("\n<br/><font color=\"red\">" +log.getSender() +" : " +log.getMessage() +"</font><br/>\n"));

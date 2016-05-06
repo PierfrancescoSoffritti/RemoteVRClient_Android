@@ -5,7 +5,9 @@ import android.util.Log;
 import com.squareup.otto.Subscribe;
 
 /**
- * Created by Pierfrancesco on 03/03/2016.
+ * An {@link ILogger} that logs on the console.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class ConsoleLogger implements ILogger {
 
@@ -18,6 +20,7 @@ public class ConsoleLogger implements ILogger {
     }
 
     @Subscribe
+    @Override
     public void onLog(LoggerBus.Log log){
         Log.d(log.getSender(), log.getMessage());
     }

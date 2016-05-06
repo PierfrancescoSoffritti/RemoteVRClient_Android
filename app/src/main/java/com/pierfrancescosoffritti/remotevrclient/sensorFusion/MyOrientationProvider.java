@@ -9,6 +9,8 @@ import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Qua
 
 /**
  * Wrapper of the {@link OrientationProvider } class
+ *
+ * @author Pierfrancesco Soffritti
  */
 public class MyOrientationProvider {
 

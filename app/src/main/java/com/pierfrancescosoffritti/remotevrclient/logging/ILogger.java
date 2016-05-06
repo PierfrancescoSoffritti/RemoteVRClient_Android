@@ -1,9 +1,10 @@
 package com.pierfrancescosoffritti.remotevrclient.logging;
 
 /**
- * Created by Pierfrancesco on 04/03/2016.
+ * A class that implements this interface is capable of receiving and handling log events.
+ *
+ * @author Pierfrancesco Soffritti
  */
 public interface ILogger {
-
     void onLog(LoggerBus.Log log);
 }

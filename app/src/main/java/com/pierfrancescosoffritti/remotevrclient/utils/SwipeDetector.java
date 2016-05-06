@@ -3,8 +3,8 @@ package com.pierfrancescosoffritti.remotevrclient.utils;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
-/**
- * Created by  Pierfrancesco on 14/04/2016.
+/** *
+ * @author Pierfrancesco Soffritti
  */
 public class SwipeDetector extends GestureDetector.SimpleOnGestureListener {
 

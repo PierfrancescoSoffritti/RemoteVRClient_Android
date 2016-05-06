@@ -2,10 +2,15 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
     <EditTextPreference
         android:title="@string/server_ip"
-        android:key="@string/server_ip"/>
+        android:key="@string/server_ip_key"/>
 
     <EditTextPreference
         android:title="@string/server_port"
-        android:key="@string/server_port"/>
+        android:key="@string/server_port_key"/>
+
+    <CheckBoxPreference
+        android:title="@string/use_TCP"
+        android:key="@string/use_TCP_key"
+        android:defaultValue="true" />
 
 </PreferenceScreen>
