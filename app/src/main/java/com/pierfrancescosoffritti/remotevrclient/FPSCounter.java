@@ -8,7 +8,7 @@ import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 import com.squareup.otto.Subscribe;
 
 /**
- * Created by  Pierfrancesco on 06/03/2016.
+ * Class responsible for showing FPS log events on a text view
  */
 public class FPSCounter implements ILogger {
 

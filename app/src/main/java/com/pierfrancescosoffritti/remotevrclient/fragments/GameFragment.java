@@ -1,14 +1,10 @@
 package com.pierfrancescosoffritti.remotevrclient.fragments;
 
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -17,12 +13,11 @@ import android.view.ViewGroup;
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.FPSCounter;
-import com.pierfrancescosoffritti.remotevrclient.FullScreenManager;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.RemoteVRView;
-import com.pierfrancescosoffritti.remotevrclient.activities.PreferencesActivity;
 import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerIO;
 import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerTCP;
+import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerUDP;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
 import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
@@ -40,26 +35,35 @@ import rx.Observable;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
+/**
+ * Created by  Pierfrancesco on 06/03/2016.
+ * this fragment contains the game view and controls
+ */
 public class GameFragment extends BaseFragment {
 
     protected final String LOG_TAG = getClass().getSimpleName();
 
     private ServerIO serverConnection;
-
     private MyOrientationProvider orientationProvider;
-
-    @Bind(R.id.remotevr_view) RemoteVRView remoteVRView;
-    @Bind(R.id.connected_view) View connectedView;
-    @Bind(R.id.not_connected_view) View notConnectedView;
-    @Bind(R.id.connection_in_progress_view) View connectionInProgressView;
-
-    private FullScreenManager fullScreenManager;
 
     private FPSCounter fpsCounter;
 
-    // toolbar buttons, inflated manually.
-    private View connectButton;
-    private View disconnectButton;
+    @Bind(R.id.remote_vr_view) RemoteVRView remoteVRView;
+
+    /**
+     * view shown when the game is connected. Contains the {@link RemoteVRView}.
+     */
+    @Bind(R.id.connected_view) View connectedView;
+
+    /**
+     * view shown when the game is not connected.
+     */
+    @Bind(R.id.not_connected_view) View notConnectedView;
+
+    /**
+     * view shown when the connection is in progress.
+     */
+    @Bind(R.id.connection_in_progress_view) View connectionInProgressView;
 
     public GameFragment() {
     }
@@ -73,8 +77,6 @@ public class GameFragment extends BaseFragment {
         View view = inflater.inflate(R.layout.fragment_remote_vr, container, false);
         ButterKnife.bind(this, view);
 
-        setupToolbar();
-
         notConnectedView.setOnClickListener((v) -> startClient());
 
         fpsCounter = new FPSCounter(ButterKnife.findById(view, R.id.fps_counter));
@@ -82,40 +84,7 @@ public class GameFragment extends BaseFragment {
         orientationProvider = new MyOrientationProvider(getContext());
         orientationProvider.start();
 
-        // when long clicked goes full screen.
-        fullScreenManager = new FullScreenManager(getActivity(), ((AppCompatActivity)getActivity()).getSupportActionBar(), getActivity().findViewById(R.id.tab_layout));
-
         return view;
-    }
-
-    private void setupToolbar() {
-        Toolbar toolbar = (Toolbar) getActivity().findViewById(R.id.toolbar);
-
-        // clear the toolbar
-        if(toolbar.getChildCount() > 1)
-            for(int i=1; i<toolbar.getChildCount(); i++)
-                toolbar.removeView(toolbar.getChildAt(i));
-
-        setupToolbarButtons(toolbar);
-    }
-
-    private void setupToolbarButtons(Toolbar toolbar) {
-        View connectionControls = LayoutInflater.from(getContext()).inflate(R.layout.connection_controls, toolbar, false);
-        Toolbar.LayoutParams params = new Toolbar.LayoutParams(Toolbar.LayoutParams.WRAP_CONTENT, Toolbar.LayoutParams.WRAP_CONTENT);
-        params.gravity = Gravity.RIGHT;
-        toolbar.addView(connectionControls, params);
-
-        connectButton = connectionControls.findViewById(R.id.connect);
-        disconnectButton = connectionControls.findViewById(R.id.disconnect);
-
-        // listeners
-        connectButton.setOnClickListener((view) -> startClient());
-        disconnectButton.setOnClickListener((view) -> { if(serverConnection != null) serverConnection.disconnect(); });
-
-        connectionControls.findViewById(R.id.settings).setOnClickListener((view) -> {
-            Intent intent = new Intent(getActivity(), PreferencesActivity.class);
-            getActivity().startActivity(intent);
-        });
     }
 
     /**
@@ -138,59 +107,58 @@ public class GameFragment extends BaseFragment {
         new Thread() {
             public void run() {
                 try {
-                    //serverConnection = new ServerUDP(serverIP, serverPort, 2098);
-                    serverConnection = new ServerTCP(serverIP, serverPort);
+                    serverConnection = new ServerUDP(serverIP, serverPort, 2098);
+//                    serverConnection = new ServerTCP(serverIP, serverPort);
                 } catch (IOException e) {
                     LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass() + " . " +e.getMessage(), LOG_TAG, LoggerBus.Log.ERROR));
                     SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_connect, -1, Snackbar.LENGTH_LONG);
                     return;
                 }
 
+                // send screen resolution
                 try {
-                    // send screen resolution
                     serverConnection.sendScreenResolution(screenWidth, screenHeight);
-
-
-                    // game video
-                    serverConnection
-                            .getServerOutput()
-
-                            // performance monitor
-                            .doOnSubscribe(mPerformanceMonitor::start)
-                            .doOnNext(bitmap -> mPerformanceMonitor.incCounter())
-                            .doOnUnsubscribe(mPerformanceMonitor::stop)
-
-                            .subscribeOn(Schedulers.io())
-                            .doOnSubscribe(() -> EventBus.getInstance().post(new Events.ServerConnected()))
-                            .doOnSubscribe(() -> LoggerBus.getInstance().post(new LoggerBus.Log("Started connection with server.", LOG_TAG)))
-
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_receiving_images, -1, Snackbar.LENGTH_LONG))
-                            .subscribe(bitmap -> remoteVRView.updateImage(bitmap), Throwable::printStackTrace);
-
-                    // game input
-                    // gyro
-                    Observable.interval(16, TimeUnit.MILLISECONDS, Schedulers.io())
-                            .map(tick -> orientationProvider.getQuaternion())
-                            .map(quaternion -> GyroInput.getInstance().putPayload(quaternion))
-                            .subscribeOn(Schedulers.io())
-                            //.doOnSubscribe(orientationProvider::start)
-                            //.doOnUnsubscribe(orientationProvider::stop)
-                            .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_gyro, -1, Snackbar.LENGTH_LONG))
-                            .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
-
-                    // touch
-                    remoteVRView.getPublishSubject()
-                            .observeOn(Schedulers.io())
-                            .filter(event -> event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP)
-                            .map(event -> TouchInput.getInstance().putPayload(event))
-                            .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_touch, -1, Snackbar.LENGTH_LONG))
-                            .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
-
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_send_screen_res, -1, Snackbar.LENGTH_LONG);
                     serverConnection.disconnect();
+                    return;
                 }
+
+                // game video
+                serverConnection
+                        .getServerOutput()
+
+                        // performance monitor
+                        .doOnSubscribe(mPerformanceMonitor::start)
+                        .doOnNext(bitmap -> mPerformanceMonitor.incCounter())
+                        .doOnUnsubscribe(mPerformanceMonitor::stop)
+
+                        .subscribeOn(Schedulers.io())
+                        .doOnSubscribe(() -> EventBus.getInstance().post(new Events.ServerConnected()))
+                        .doOnSubscribe(() -> LoggerBus.getInstance().post(new LoggerBus.Log("Started connection with server.", LOG_TAG)))
+
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_receiving_images, -1, Snackbar.LENGTH_LONG))
+                        .subscribe(bitmap -> remoteVRView.updateImage(bitmap), Throwable::printStackTrace);
+
+                // game input
+                // gyro
+                Observable.interval(16, TimeUnit.MILLISECONDS, Schedulers.io())
+                        .map(tick -> orientationProvider.getQuaternion())
+                        .map(quaternion -> GyroInput.getInstance().putPayload(quaternion))
+                        .subscribeOn(Schedulers.io())
+                        //.doOnSubscribe(orientationProvider::start)
+                        //.doOnUnsubscribe(orientationProvider::stop)
+                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_gyro, -1, Snackbar.LENGTH_LONG))
+                        .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
+
+                // touch
+                remoteVRView.getPublishSubject()
+                        .observeOn(Schedulers.io())
+                        .filter(event -> event.getAction() == MotionEvent.ACTION_DOWN || event.getAction() == MotionEvent.ACTION_UP)
+                        .map(event -> TouchInput.getInstance().putPayload(event))
+                        .doOnError((error) -> SnackbarFactory.snackbarRequest(getView(), R.string.error_sending_touch, -1, Snackbar.LENGTH_LONG))
+                        .subscribe(serverConnection.getServerInput(), Throwable::printStackTrace);
             }
         }.start();
     }
@@ -215,6 +183,8 @@ public class GameFragment extends BaseFragment {
         orientationProvider.stop();
     }
 
+    // events
+
     @SuppressWarnings("unused")
     @Subscribe
     public void onServerConnecting(Events.ServerConnecting e) {
@@ -226,30 +196,32 @@ public class GameFragment extends BaseFragment {
     @SuppressWarnings("unused")
     @Subscribe
     public void onServerConnected(Events.ServerConnected e) {
-        fullScreenManager.enterFullScreen();
+        EventBus.getInstance().post(new Events.GoFullScreen(true));
 
         connectionInProgressView.setVisibility(View.GONE);
         connectedView.setVisibility(View.VISIBLE);
         notConnectedView.setVisibility(View.GONE);
-        connectButton.setVisibility(View.GONE);
-        disconnectButton.setVisibility(View.VISIBLE);
     }
 
     @SuppressWarnings("unused")
     @Subscribe
     public void onServerDisconnected(Events.ServerDisconnected e) {
-        fullScreenManager.exitFullScreen();
+        EventBus.getInstance().post(new Events.GoFullScreen(false));
 
         connectionInProgressView.setVisibility(View.GONE);
         connectedView.setVisibility(View.GONE);
         notConnectedView.setVisibility(View.VISIBLE);
-        connectButton.setVisibility(View.VISIBLE);
-        disconnectButton.setVisibility(View.GONE);
     }
 
     @SuppressWarnings("unused")
     @Subscribe
     public void disconnectServer(Events.DisconnectServer e) {
         if(serverConnection != null) serverConnection.disconnect();
+    }
+
+    @SuppressWarnings("unused")
+    @Subscribe
+    public void onGameViewSwipeDetected(Events.RemoteView_SwipeTopBottom e) {
+        disconnectServer(null);
     }
 }

@@ -10,8 +10,8 @@ import rx.Observable;
 import rx.functions.Action1;
 
 /**
- * Created by  Pierfrancesco on 05/05/2016.
  * This interface represents the contract with the server.
+ * <br/>
  * Should be implemented by each class that wants to communicate with the server.
  */
 public interface ServerIO {

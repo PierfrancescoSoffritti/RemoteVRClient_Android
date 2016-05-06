@@ -8,9 +8,7 @@ import com.pierfrancescosoffritti.remotevrclient.sensorFusion.orientationProvide
 import com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation.Quaternion;
 
 /**
- * Created by  Pierfrancesco on 14/03/2016.
- *
- * Wrapper of the OrientationProvider class
+ * Wrapper of the {@link OrientationProvider } class
  */
 public class MyOrientationProvider {
 

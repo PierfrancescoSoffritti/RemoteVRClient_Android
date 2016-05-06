@@ -1,71 +1,68 @@
 package com.pierfrancescosoffritti.remotevrclient;
 
 import android.app.Activity;
-import android.support.v7.app.ActionBar;
 import android.view.View;
 
 /**
- * Created by  Pierfrancesco on 22/03/2016.
+ * Class responsible for changing the view to full screen and non-full screen
  */
 public class FullScreenManager {
 
     private Activity mContext;
-    private ActionBar mActionBar;
-    private View mTabs;
+    private View[] views;
 
-    public FullScreenManager(Activity context, ActionBar supportActionBar, View tabs) {
+    /**
+     * @param context
+     * @param views to hide/show
+     */
+    public FullScreenManager(Activity context, View ... views) {
         mContext = context;
-        mActionBar = supportActionBar;
-        mTabs = tabs;
+        this.views = views;
     }
 
-    // This snippet hides the system bars.
+    /**
+     * call this method to enter full screen
+     */
+    public void enterFullScreen() {
+        View decorView = mContext.getWindow().getDecorView();
+
+        hideSystemUI(decorView);
+
+        for(View view : views) {
+            view.setVisibility(View.GONE);
+            view.invalidate();
+        }
+    }
+
+    /**
+     * call this method to exit full screen
+     */
+    public void exitFullScreen() {
+        View decorView = mContext.getWindow().getDecorView();
+
+        showSystemUI(decorView);
+
+        for(View view : views) {
+            view.setVisibility(View.VISIBLE);
+            view.invalidate();
+        }
+    }
+
+    // hides the system bars.
     private void hideSystemUI(View mDecorView) {
-        // Set the IMMERSIVE flag.
-        // Set the content to appear under the system bars so that the content
-        // doesn't resize when the system bars hide and show.
         mDecorView.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
                         | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
-                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
                         | View.SYSTEM_UI_FLAG_IMMERSIVE);
     }
 
-    // This snippet shows the system bars. It does this by removing all the flags
-    // except for the ones that make the content appear under the system bars.
+    // This snippet shows the system bars.
     private void showSystemUI(View mDecorView) {
         mDecorView.setSystemUiVisibility(
                 View.SYSTEM_UI_FLAG_LAYOUT_STABLE
         );
-    }
-
-    public void enterFullScreen() {
-        mActionBar.hide();
-        mTabs.setVisibility(View.GONE);
-
-        View decorView = mContext.getWindow().getDecorView();
-        // Hide the status bar.
-        //int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
-        //decorView.setSystemUiVisibility(uiOptions);
-
-        hideSystemUI(decorView);
-
-        mTabs.invalidate();
-    }
-
-    public void exitFullScreen() {
-        mActionBar.show();
-        mTabs.setVisibility(View.VISIBLE);
-
-        View decorView = mContext.getWindow().getDecorView();
-        // Hide the status bar.
-        //int uiOptions = View.SYSTEM_UI_FLAG_FULLSCREEN;
-        //decorView.setSystemUiVisibility(uiOptions);
-
-        showSystemUI(decorView);
-
-        mTabs.invalidate();
     }
 }

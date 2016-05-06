@@ -8,8 +8,6 @@ import com.pierfrancescosoffritti.remotevrclient.Events;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GameInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
 
-import java.io.ByteArrayOutputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -23,7 +21,11 @@ import rx.Observable;
 import rx.functions.Action1;
 
 /**
- * Created by  Pierfrancesco on 05/05/2016.
+ * This class represents a UPD endpoint to the server.
+ * <br/><br/>
+ * <b>No form of quality/reliability control is implemented.</b>
+ * <br/>
+ * The current scope of the application is to work in a LAN, so it's good enough. For communication outside of a LAN a better protocol may be needed.
  */
 public class ServerUDP implements ServerIO {
 
@@ -31,60 +33,85 @@ public class ServerUDP implements ServerIO {
 
     private final static int SOCKET_TIMEOUT = 2000;
 
-    private SocketAddress socketAddress;
+    private SocketAddress serverAddress;
 
     private DatagramSocket socket;
     private DatagramPacket inputPacket;
     private DatagramPacket outputPacket;
 
-    public ServerUDP(String serverIP, int communicationPort, int initConnectionPort) throws  IOException {
+    /**
+     * Create and instance of a UDP endpoint to the server.
+     * <br/>
+     * The UDP server utilizes two ports. One for initiating new sessions and the other for inter-session communications.
+     * @param serverIP the IP of the server.
+     * @param communicationPort the port that will be used for transferring images/inputs.
+     * @param initSessionsPort the port on which the server is listening for new sessions.
+     * @throws IOException if is not possible to establish a session with the server.
+     */
+    public ServerUDP(String serverIP, int communicationPort, int initSessionsPort) throws  IOException {
         socket = new DatagramSocket();
         socket.setSoTimeout(SOCKET_TIMEOUT);
 
-        socketAddress = new InetSocketAddress(InetAddress.getByName(serverIP), communicationPort);
-        outputPacket = new DatagramPacket(new byte[GameInput.BUFFER_SIZE], GameInput.BUFFER_SIZE, socketAddress);
-        inputPacket = new DatagramPacket(new byte[100000], 100000, socketAddress);
+        serverAddress = new InetSocketAddress(InetAddress.getByName(serverIP), communicationPort);
+        outputPacket = new DatagramPacket(new byte[GameInput.BUFFER_SIZE], GameInput.BUFFER_SIZE, serverAddress);
+        inputPacket = new DatagramPacket(new byte[100000], 100000, serverAddress);
 
         EventBus.getInstance().post(new Events.ServerConnecting());
 
-        initConnection(serverIP, initConnectionPort);
+        sendDiscoveryPacket(serverIP, initSessionsPort);
     }
 
-    private void initConnection(String serverIP, int serverPort) throws IOException {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        DataOutputStream dataOutputStream = new DataOutputStream(byteArrayOutputStream);
-        dataOutputStream.writeInt(0);
+    /**
+     * the discovery packet will initiate a session with the server.
+     * @param serverIP the IP of the server.
+     * @param initSessionsPort the port on which the server is listening for new sessions.
+     * @throws IOException if, after 3 attempts, no answer is received.
+     */
+    private void sendDiscoveryPacket(String serverIP, int initSessionsPort) throws IOException {
+        int attempts = 0;
 
-        DatagramPacket resolutionPacket = new DatagramPacket(
-                byteArrayOutputStream.toByteArray(),
-                byteArrayOutputStream.toByteArray().length,
-                new InetSocketAddress(InetAddress.getByName(serverIP), serverPort));
+        while (true) {
+            DatagramPacket discoveryPacket = new DatagramPacket(
+                    new byte[0],
+                    0,
+                    new InetSocketAddress(InetAddress.getByName(serverIP), initSessionsPort));
 
-        socket.send(resolutionPacket);
+            socket.send(discoveryPacket);
+
+            try {
+                socket.receive(discoveryPacket);
+                break;
+            } catch (SocketTimeoutException e) {
+                attempts++;
+                if (attempts >= 3) {
+                    disconnect();
+                    throw new IOException("can't connect");
+                }
+            }
+        }
     }
 
     @Override
     public void sendScreenResolution(int screenWidth, int screenHeight) throws IOException {
         byte[] resolution = ByteBuffer.allocate(8).putInt(screenWidth).putInt(screenHeight).array();
 
-        int attempt = 0;
+        int attempts = 0;
 
         while (true) {
             DatagramPacket resolutionPacket = new DatagramPacket(
                     resolution,
                     resolution.length,
-                    socketAddress);
+                    serverAddress);
 
             socket.send(resolutionPacket);
 
             try {
                 socket.receive(resolutionPacket);
-                if (resolutionPacket.getData().length == resolution.length)
-                    break;
+                break;
             } catch (SocketTimeoutException e) {
-                attempt ++;
-                if(attempt >= 3)
-                    throw new IOException("can't connect");
+                attempts ++;
+                if(attempts >= 3)
+                    throw new IOException("can't send resolution");
             }
         }
     }

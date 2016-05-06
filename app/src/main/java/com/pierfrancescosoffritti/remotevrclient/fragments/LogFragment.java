@@ -15,7 +15,10 @@ import com.squareup.otto.Subscribe;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 
-
+/**
+ * Created by  Pierfrancesco on 06/03/2016.
+ * fragment responsible for showing the logs
+ */
 public class LogFragment extends BaseFragment implements ILogger {
 
     @Bind(R.id.log_view) TextView logView;

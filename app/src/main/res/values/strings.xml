@@ -14,4 +14,6 @@
     <string name="error_sending_touch">An error occurred while sending touch data</string>
     <string name="error_cant_connect">Can\'t connect to the server</string>
     <string name="connecting">Connecting ..</string>
+    <string name="error_cant_send_screen_res">Can\'t send screen resolution</string>
+    <string name="settings">Settings</string>
 </resources>

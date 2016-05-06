@@ -14,11 +14,18 @@ import com.pierfrancescosoffritti.remotevrclient.utils.SwipeDetector;
 import rx.subjects.PublishSubject;
 
 /**
- * Created by  Pierfrancesco on 02/03/2016.
+ * Custom View responsible for showing the game images and receiving game inputs
  */
 public class RemoteVRView extends View {
+
+    /**
+     * current bitmap
+     */
     private Bitmap mBitmap;
 
+    /**
+     * {@link PublishSubject} used to handle the touch events on the view as a stream
+     */
     private PublishSubject<MotionEvent> publishSubject = PublishSubject.create();
 
     public RemoteVRView(Context context) {
@@ -33,8 +40,12 @@ public class RemoteVRView extends View {
         super(context, attrs, defStyleAttr);
     }
 
-    public void updateImage(Bitmap bImage) {
-        mBitmap = bImage;
+    /**
+     * Sets a new bitmap and invalidate the view
+     * @param image the new bitmap to be drawn
+     */
+    public void updateImage(Bitmap image) {
+        mBitmap = image;
         invalidate();
     }
 
@@ -43,42 +54,55 @@ public class RemoteVRView extends View {
         super.onDraw(canvas);
 
         if (mBitmap != null) {
-            drawBitmap(canvas);
+            drawBitmap(mBitmap, canvas);
         }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         publishSubject.onNext(event);
+
         swipeDetector.onTouchEvent(event);
 
+        // return, so we can detect ACTION_UP
         if(event.getAction() == MotionEvent.ACTION_DOWN)
             return true;
 
         return super.onTouchEvent(event);
     }
 
+    /**
+     * Swipe detector responsible for detecting top-bottom swipes
+     */
     private final GestureDetector swipeDetector = new GestureDetector(getContext(), new SwipeDetector(){
         @Override
         public void onSwipeBottom() {
-            EventBus.getInstance().post(new Events.DisconnectServer());
+            EventBus.getInstance().post(new Events.RemoteView_SwipeTopBottom());
         }
     });
 
+    /**
+     * @return a {@link PublishSubject} representing touch events on the view as a stream
+     */
     public PublishSubject<MotionEvent> getPublishSubject() {
         return publishSubject;
     }
 
-    private double drawBitmap(Canvas canvas ) {
-        // TODO images will have 2 known sizes, for landscape and portrait, so this will be moved out from here
+    /**
+     *  draws the bitmap on the canvas, with the appropriate scale
+     * @param bitmap the image to draw
+     * @param canvas canvas to draw on
+     * @return the scale of the drawn image
+     */
+    private double drawBitmap(Bitmap bitmap, Canvas canvas ) {
         double viewWidth = canvas.getWidth();
         double viewHeight = canvas.getHeight();
-        double imageWidth = mBitmap.getWidth();
-        double imageHeight = mBitmap.getHeight();
+        double imageWidth = bitmap.getWidth();
+        double imageHeight = bitmap.getHeight();
         double scale = Math.min(viewWidth / imageWidth, viewHeight / imageHeight);
 
         Rect destBounds = new Rect( 0, 0, (int) ( imageWidth * scale ), (int) ( imageHeight * scale ) );
-        canvas.drawBitmap(mBitmap, null, destBounds, null);
+        canvas.drawBitmap(bitmap, null, destBounds, null);
         return scale;
     }
 }
