@@ -1,6 +1,5 @@
 <resources>
     <string name="app_name">CloudVRClient</string>
-    <string name="sample_text">sample_text</string>
     <string name="fps_counter">fps_counter</string>
     <string name="game">Game</string>
     <string name="log">Log</string>
@@ -20,4 +19,5 @@
     <string name="server_ip">Server IP</string>
     <string name="server_port">Server port</string>
     <string name="use_TCP">Use TCP</string>
+    <string name="play_button">Play button</string>
 </resources>

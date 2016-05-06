@@ -18,8 +18,8 @@
 
             android:layout_alignParentBottom="true"
             android:layout_alignParentTop="true"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentLeft="true" />
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentStart="true" />
 
         <TextView
             android:id="@+id/fps_counter"
@@ -28,7 +28,7 @@
             android:padding="16dp"
             android:text="@string/fps_counter"
 
-            android:layout_alignParentRight="true" />
+            android:layout_alignParentEnd="true" />
     </RelativeLayout>
 
     <RelativeLayout
@@ -56,6 +56,7 @@
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/ic_play_arrow_48dp"
             android:tint="@color/colorAccent"
+            android:contentDescription="@string/play_button"
 
             android:layout_centerInParent="true" />
 
