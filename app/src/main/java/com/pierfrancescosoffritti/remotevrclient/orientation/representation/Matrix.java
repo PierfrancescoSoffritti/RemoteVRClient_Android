@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation;
+package com.pierfrancescosoffritti.remotevrclient.orientation.representation;
 
 /**
  * Matrix math utilities. These methods operate on OpenGL ES format

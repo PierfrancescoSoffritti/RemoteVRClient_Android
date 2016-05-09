@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient.sensorFusion.representation;
+package com.pierfrancescosoffritti.remotevrclient.orientation.representation;
 
 import android.util.Log;
 

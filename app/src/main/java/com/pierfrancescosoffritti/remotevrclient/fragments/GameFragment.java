@@ -21,7 +21,8 @@ import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerUDP;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
 import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
-import com.pierfrancescosoffritti.remotevrclient.sensorFusion.MyOrientationProvider;
+import com.pierfrancescosoffritti.remotevrclient.orientation.providers.CalibratedGyroscopeProvider;
+import com.pierfrancescosoffritti.remotevrclient.orientation.providers.OrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 import com.pierfrancescosoffritti.remotevrclient.utils.SnackbarFactory;
 import com.squareup.otto.Subscribe;
@@ -45,7 +46,7 @@ public class GameFragment extends BaseFragment {
     protected final String LOG_TAG = getClass().getSimpleName();
 
     private ServerIO serverConnection;
-    private MyOrientationProvider orientationProvider;
+    private OrientationProvider orientationProvider;
 
     private FPSLogger fpsLogger;
 
@@ -82,7 +83,7 @@ public class GameFragment extends BaseFragment {
 
         fpsLogger = new FPSLogger(ButterKnife.findById(view, R.id.fps_counter));
 
-        orientationProvider = new MyOrientationProvider(getContext());
+        orientationProvider = new CalibratedGyroscopeProvider(getContext());
         orientationProvider.start();
 
         return view;
