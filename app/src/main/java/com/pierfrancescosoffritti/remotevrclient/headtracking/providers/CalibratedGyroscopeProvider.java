@@ -1,10 +1,10 @@
-package com.pierfrancescosoffritti.remotevrclient.orientation.providers;
+package com.pierfrancescosoffritti.remotevrclient.headtracking.providers;
 
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 
-import com.pierfrancescosoffritti.remotevrclient.orientation.representation.Quaternion;
+import com.pierfrancescosoffritti.remotevrclient.headtracking.representation.Quaternion;
 
 /**
  * The orientation provider that delivers the relative orientation from the {@link Sensor#TYPE_GYROSCOPE
@@ -105,8 +105,7 @@ public class CalibratedGyroscopeProvider extends OrientationProvider {
             deltaQuaternion.setZ((float) (sinThetaOverTwo * axisZ));
             deltaQuaternion.setW(-(float) cosThetaOverTwo);
 
-            // Matrix rendering in CubeRenderer does not seem to have this problem.
-            // Move current gyro orientation if gyroscope should be used
+            // Update current gyro orientation
             deltaQuaternion.multiplyByQuat(currentOrientationQuaternion, currentOrientationQuaternion);
 
         }

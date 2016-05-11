@@ -2,6 +2,7 @@ package com.pierfrancescosoffritti.remotevrclient.io.connections;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.util.Log;
 
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
@@ -46,42 +47,43 @@ public class ServerUDP implements ServerIO {
      * <br/>
      * The UDP server utilizes two ports. One for initiating new sessions and the other for inter-session communications.
      * @param serverIP the IP of the server.
-     * @param communicationPort the port that will be used for transferring images/inputs.
      * @param initSessionsPort the port on which the server is listening for new sessions.
      * @throws IOException if is not possible to establish a session with the server.
      */
-    public ServerUDP(String serverIP, int communicationPort, int initSessionsPort) throws  IOException {
+    public ServerUDP(String serverIP, int initSessionsPort) throws  IOException {
         socket = new DatagramSocket();
         socket.setSoTimeout(SOCKET_TIMEOUT);
 
-        serverAddress = new InetSocketAddress(InetAddress.getByName(serverIP), communicationPort);
-        outputPacket = new DatagramPacket(new byte[GameInput.PAYLOAD_SIZE], GameInput.PAYLOAD_SIZE, serverAddress);
-        inputPacket = new DatagramPacket(new byte[100000], 100000, serverAddress);
-
         EventBus.getInstance().post(new Events.ServerConnecting());
 
-        sendDiscoveryPacket(serverIP, initSessionsPort);
+        sendInitPacket(serverIP, initSessionsPort);
     }
 
     /**
-     * the discovery packet will initiate a session with the server.
+     * the init packet will initiate a session with the server.
      * @param serverIP the IP of the server.
      * @param initSessionsPort the port on which the server is listening for new sessions.
      * @throws IOException if, after 3 attempts, no answer is received.
      */
-    private void sendDiscoveryPacket(String serverIP, int initSessionsPort) throws IOException {
+    private void sendInitPacket(String serverIP, int initSessionsPort) throws IOException {
         int attempts = 0;
 
         while (true) {
-            DatagramPacket discoveryPacket = new DatagramPacket(
+            DatagramPacket initPacket = new DatagramPacket(
                     new byte[0],
                     0,
                     new InetSocketAddress(InetAddress.getByName(serverIP), initSessionsPort));
 
-            socket.send(discoveryPacket);
+            socket.send(initPacket);
 
             try {
-                socket.receive(discoveryPacket);
+                socket.receive(initPacket);
+
+                // init endpoints
+                serverAddress = new InetSocketAddress(InetAddress.getByName(serverIP), initPacket.getPort());
+                outputPacket = new DatagramPacket(new byte[GameInput.PAYLOAD_SIZE], GameInput.PAYLOAD_SIZE, serverAddress);
+                inputPacket = new DatagramPacket(new byte[100000], 100000, serverAddress);
+
                 break;
             } catch (SocketTimeoutException e) {
                 attempts++;
@@ -109,8 +111,10 @@ public class ServerUDP implements ServerIO {
 
             try {
                 socket.receive(resolutionPacket);
+                Log.d(LOG_TAG, "res");
                 break;
             } catch (SocketTimeoutException e) {
+                Log.d(LOG_TAG, "res timeout");
                 attempts ++;
                 if(attempts >= 3)
                     throw new IOException("can't send resolution");

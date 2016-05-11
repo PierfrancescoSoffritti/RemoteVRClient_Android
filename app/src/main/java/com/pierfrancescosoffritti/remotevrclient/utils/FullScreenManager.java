@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient;
+package com.pierfrancescosoffritti.remotevrclient.utils;
 
 import android.app.Activity;
 import android.view.View;

@@ -1,14 +1,14 @@
 /**
  * 
  */
-package com.pierfrancescosoffritti.remotevrclient.orientation.providers;
+package com.pierfrancescosoffritti.remotevrclient.headtracking.providers;
 
 import android.content.Context;
 import android.hardware.Sensor;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 
-import com.pierfrancescosoffritti.remotevrclient.orientation.representation.Quaternion;
+import com.pierfrancescosoffritti.remotevrclient.headtracking.representation.Quaternion;
 
 /**
  * Classes implementing this interface provide an orientation of the device

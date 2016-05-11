@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient.orientation.representation;
+package com.pierfrancescosoffritti.remotevrclient.headtracking.representation;
 
 /**
  * The Quaternion class. A Quaternion is a four-dimensional vector that is used to represent rotations of a rigid body

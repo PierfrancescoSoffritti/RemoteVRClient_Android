@@ -21,8 +21,8 @@ import com.pierfrancescosoffritti.remotevrclient.io.connections.ServerUDP;
 import com.pierfrancescosoffritti.remotevrclient.io.data.GyroInput;
 import com.pierfrancescosoffritti.remotevrclient.io.data.TouchInput;
 import com.pierfrancescosoffritti.remotevrclient.logging.LoggerBus;
-import com.pierfrancescosoffritti.remotevrclient.orientation.providers.CalibratedGyroscopeProvider;
-import com.pierfrancescosoffritti.remotevrclient.orientation.providers.OrientationProvider;
+import com.pierfrancescosoffritti.remotevrclient.headtracking.providers.CalibratedGyroscopeProvider;
+import com.pierfrancescosoffritti.remotevrclient.headtracking.providers.OrientationProvider;
 import com.pierfrancescosoffritti.remotevrclient.utils.PerformanceMonitor;
 import com.pierfrancescosoffritti.remotevrclient.utils.SnackbarFactory;
 import com.squareup.otto.Subscribe;
@@ -113,7 +113,7 @@ public class GameFragment extends BaseFragment {
                     if(useTCP)
                         serverConnection = new ServerTCP(serverIP, serverPort);
                     else
-                        serverConnection = new ServerUDP(serverIP, serverPort, 2098);
+                        serverConnection = new ServerUDP(serverIP, serverPort);
                 } catch (IOException e) {
                     LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass() + " . " +e.getMessage(), LOG_TAG, LoggerBus.Log.ERROR));
                     SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_connect, -1, Snackbar.LENGTH_LONG);

@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient.orientation.representation;
+package com.pierfrancescosoffritti.remotevrclient.headtracking.representation;
 
 /**
  * 3-dimensional vector with conventient getters and setters. Additionally this class is serializable and

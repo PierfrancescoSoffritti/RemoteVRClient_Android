@@ -1,6 +1,6 @@
 package com.pierfrancescosoffritti.remotevrclient.io.data;
 
-import com.pierfrancescosoffritti.remotevrclient.orientation.representation.Quaternion;
+import com.pierfrancescosoffritti.remotevrclient.headtracking.representation.Quaternion;
 
 import java.nio.ByteBuffer;
 

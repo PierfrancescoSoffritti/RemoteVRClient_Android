@@ -16,7 +16,7 @@ import android.view.WindowManager;
 
 import com.pierfrancescosoffritti.remotevrclient.EventBus;
 import com.pierfrancescosoffritti.remotevrclient.Events;
-import com.pierfrancescosoffritti.remotevrclient.FullScreenManager;
+import com.pierfrancescosoffritti.remotevrclient.utils.FullScreenManager;
 import com.pierfrancescosoffritti.remotevrclient.R;
 import com.pierfrancescosoffritti.remotevrclient.adapters.ViewPagerAdapter;
 import com.pierfrancescosoffritti.remotevrclient.fragments.GameFragment;

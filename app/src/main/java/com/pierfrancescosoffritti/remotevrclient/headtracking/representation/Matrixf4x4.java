@@ -1,4 +1,4 @@
-package com.pierfrancescosoffritti.remotevrclient.orientation.representation;
+package com.pierfrancescosoffritti.remotevrclient.headtracking.representation;
 
 import android.util.Log;
 
