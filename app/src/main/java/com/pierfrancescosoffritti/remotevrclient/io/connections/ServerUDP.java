@@ -80,7 +80,7 @@ public class ServerUDP implements ServerIO {
                 socket.receive(initPacket);
 
                 // init endpoints
-                serverAddress = new InetSocketAddress(InetAddress.getByName(serverIP), initPacket.getPort());
+                serverAddress = new InetSocketAddress(initPacket.getAddress(), initPacket.getPort());
                 outputPacket = new DatagramPacket(new byte[GameInput.PAYLOAD_SIZE], GameInput.PAYLOAD_SIZE, serverAddress);
                 inputPacket = new DatagramPacket(new byte[100000], 100000, serverAddress);
 

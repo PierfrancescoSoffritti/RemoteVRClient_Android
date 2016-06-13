@@ -113,7 +113,7 @@ public class GameFragment extends BaseFragment {
                     if(useTCP)
                         serverConnection = new ServerTCP(serverIP, serverPort);
                     else
-                        serverConnection = new ServerUDP(serverIP, serverPort);
+                        serverConnection = new ServerUDP("192.168.1.255", serverPort);
                 } catch (IOException e) {
                     LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass() + " . " +e.getMessage(), LOG_TAG, LoggerBus.Log.ERROR));
                     SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_connect, -1, Snackbar.LENGTH_LONG);
