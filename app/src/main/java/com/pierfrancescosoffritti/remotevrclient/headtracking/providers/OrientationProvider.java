@@ -1,6 +1,3 @@
-/**
- * 
- */
 package com.pierfrancescosoffritti.remotevrclient.headtracking.providers;
 
 import android.content.Context;
@@ -15,7 +12,6 @@ import com.pierfrancescosoffritti.remotevrclient.headtracking.representation.Qua
  * 
  * The orientation is provided as quaternion.
  * 
- * @author Alexander Pacha
  * @author Pierfrancesco Soffritti
  * 
  */

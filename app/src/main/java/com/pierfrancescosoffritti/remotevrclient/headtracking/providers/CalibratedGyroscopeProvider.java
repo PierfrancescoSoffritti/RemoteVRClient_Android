@@ -13,7 +13,6 @@ import com.pierfrancescosoffritti.remotevrclient.headtracking.representation.Qua
  * This sensor does not deliver an absolute orientation (with respect to magnetic north and gravity) but
  * only a relative measurement starting from the point where it started.
  * 
- * @author Alexander Pacha
  * @author Pierfrancesco Soffritti
  * 
  */
