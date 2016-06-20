@@ -94,8 +94,7 @@ public class CalibratedGyroscopeProvider extends OrientationProvider {
 
             // Integrate around this axis with the angular speed by the timestep
             // in order to get a delta rotation from this sample over the timestep
-            // We will convert this axis-angle representation of the delta rotation
-            // into a quaternion before turning it into the rotation matrix.
+            // We will convert this axis-angle representation of the delta rotation into a quaternion
             double thetaOverTwo = gyroscopeRotationVelocity * dT / 2.0f;
             double sinThetaOverTwo = Math.sin(thetaOverTwo);
             double cosThetaOverTwo = Math.cos(thetaOverTwo);

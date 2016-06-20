@@ -104,8 +104,6 @@ public class GameFragment extends BaseFragment {
         int screenWidth = displayMetrics.widthPixels;
         int screenHeight = displayMetrics.heightPixels;
 
-        PerformanceMonitor mPerformanceMonitor = new PerformanceMonitor();
-
         // it's not nice to have this thread, but for now it's ok
         // also I should create a specific class for this piece of logic. It's wrong to have it here.
         new Thread() {
@@ -129,6 +127,8 @@ public class GameFragment extends BaseFragment {
                     serverConnection.disconnect();
                     return;
                 }
+
+                PerformanceMonitor mPerformanceMonitor = new PerformanceMonitor();
 
                 // game video
                 serverConnection
