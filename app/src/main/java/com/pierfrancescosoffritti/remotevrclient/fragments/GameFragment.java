@@ -104,6 +104,7 @@ public class GameFragment extends BaseFragment {
         int screenWidth = displayMetrics.widthPixels;
         int screenHeight = displayMetrics.heightPixels;
 
+        // TODO refactor
         // it's not nice to have this thread, but for now it's ok
         // also I should create a specific class for this piece of logic. It's wrong to have it here.
         new Thread() {
@@ -112,7 +113,7 @@ public class GameFragment extends BaseFragment {
                     if(useTCP)
                         serverConnection = new ServerTCP(serverIP, serverPort);
                     else
-                        serverConnection = new ServerUDP("192.168.1.255", serverPort);
+                        serverConnection = new ServerUDP(serverIP, serverPort);
                 } catch (IOException e) {
                     LoggerBus.getInstance().post(new LoggerBus.Log("Error creating socket: " + e.getClass() + " . " +e.getMessage(), LOG_TAG, LoggerBus.Log.ERROR));
                     SnackbarFactory.snackbarRequest(getView(), R.string.error_cant_connect, -1, Snackbar.LENGTH_LONG);
